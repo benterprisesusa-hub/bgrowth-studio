@@ -108,7 +108,7 @@ export function PlannerEngine({ ownerEmail }: PlannerEngineProps) {
   };
 
   // ---- My Planners list ----
-  if (activeView === 'list') {
+  if (activeView === 'list' || activeView === 'overview' || activeView === 'templates' || activeView === 'favorites' || activeView === 'trash') {
     return (
       <div className="flex h-full">
         {/* Left sidebar */}
