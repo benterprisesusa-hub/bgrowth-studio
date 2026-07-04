@@ -41,7 +41,7 @@ export function PlannerEngine({ ownerEmail }: PlannerEngineProps) {
   const [step, setStep] = useState<Step>(1);
   const [config, setConfig] = useState<PlannerConfig>(emptyPlannerConfig);
   const [drafts, setDrafts] = useState<PlannerConfig[]>(loadDrafts);
-  const [activeView, setActiveView] = useState<'builder' | 'list'>('list');
+  const [activeView, setActiveView] = useState<'builder' | 'list' | 'overview' | 'templates' | 'favorites' | 'trash'>('list');
   const [isPublishing, setIsPublishing] = useState(false);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
 
@@ -117,18 +117,19 @@ export function PlannerEngine({ ownerEmail }: PlannerEngineProps) {
             <p className="text-[10px] font-bold uppercase tracking-widest text-navy-400">Planner Dashboard</p>
           </div>
           {[
-            { icon: <LayoutGrid className="h-4 w-4" />, label: 'Overview' },
-            { icon: <BookOpen className="h-4 w-4" />, label: 'My Planners', active: true },
-            { icon: <Layers className="h-4 w-4" />, label: 'Templates' },
-            { icon: <Star className="h-4 w-4" />, label: 'Favorites' },
-            { icon: <Trash2 className="h-4 w-4" />, label: 'Trash' },
+            { icon: <LayoutGrid className="h-4 w-4" />, label: 'Overview', view: 'overview' },
+            { icon: <BookOpen className="h-4 w-4" />, label: 'My Planners', active: activeView === 'list', view: 'list' },
+            { icon: <Layers className="h-4 w-4" />, label: 'Templates', view: 'templates' },
+            { icon: <Star className="h-4 w-4" />, label: 'Favorites', view: 'favorites' },
+            { icon: <Trash2 className="h-4 w-4" />, label: 'Trash', view: 'trash' },
           ].map((item) => (
             <button
               key={item.label}
               type="button"
+              onClick={() => setActiveView(item.view as typeof activeView)}
               className={cn(
                 'flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors',
-                item.active
+                (item.active || activeView === item.view)
                   ? 'border-l-2 border-brand bg-brand-50 text-brand-700'
                   : 'text-navy-500 hover:bg-navy-50 hover:text-navy-800'
               )}
@@ -172,26 +173,68 @@ export function PlannerEngine({ ownerEmail }: PlannerEngineProps) {
               <p className="text-sm text-navy-400">Create. Customize. Plan. Achieve.</p>
             </div>
             <div className="flex items-center gap-2">
-              <button type="button" className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50">
-                <Book className="h-4 w-4" /> Templates Library
-              </button>
-              <button type="button" className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50">
-                <Eye className="h-4 w-4" /> Preview
-              </button>
-              <button type="button" className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50">
-                <Save className="h-4 w-4" /> Save Draft
-              </button>
-              <button
-                type="button"
-                onClick={handleNew}
-                className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
-              >
+              <button type="button" onClick={handleNew} className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">
                 <Plus className="h-4 w-4" /> Create New Planner
               </button>
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6">
+            {activeView === 'overview' && (
+              <div>
+                <h2 className="mb-4 text-2xl font-extrabold text-navy-900">Overview</h2>
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  {[{label:'Total Planners',val:drafts.length,color:'text-brand'},{label:'Published',val:drafts.filter(d=>d.name).length,color:'text-emerald-500'},{label:'Favorites',val:0,color:'text-amber-500'}].map(s=>(
+                    <div key={s.label} className="rounded-2xl border border-navy-100 bg-white p-5 shadow-card text-center">
+                      <p className={`text-3xl font-extrabold ${s.color}`}>{s.val}</p>
+                      <p className="text-sm text-navy-500 mt-1">{s.label}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-2xl border border-navy-100 bg-white p-5 shadow-card">
+                  <p className="font-semibold text-navy-800 mb-3">Recent Planners</p>
+                  {drafts.length === 0 ? <p className="text-sm text-navy-400">No planners yet.</p> : drafts.slice(0,5).map(d=>(
+                    <button key={d.productId} type="button" onClick={()=>handleOpenDraft(d)} className="flex items-center gap-3 rounded-lg p-2 w-full text-left hover:bg-navy-50">
+                      <span className="h-8 w-8 rounded-lg flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:d.theme.primaryColor}}>{d.name?.[0]??'P'}</span>
+                      <span className="text-sm font-medium text-navy-800">{d.name||'Untitled'}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeView === 'templates' && (
+              <div>
+                <h2 className="mb-4 text-2xl font-extrabold text-navy-900">Planner Templates</h2>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {['Business Startup','Weekly Productivity','Goal Achievement','Project Management','Monthly Budget','Fitness & Health'].map((name,i)=>(
+                    <button key={name} type="button" onClick={handleNew} className="flex flex-col gap-3 rounded-2xl border border-navy-100 bg-white p-5 text-left shadow-card hover:shadow-cardHover">
+                      <div className="h-20 rounded-xl flex items-center justify-center text-white font-bold text-sm" style={{background:['#1061EC','#7C3AED','#059669','#D97706','#E11D48','#0EA5A0'][i]}}>{name.split(' ')[0]}</div>
+                      <p className="font-semibold text-navy-800 text-sm">{name} Planner</p>
+                      <p className="text-xs text-brand-600 font-medium">Use this template →</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {activeView === 'favorites' && (
+              <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+                <Star className="h-16 w-16 text-navy-200" />
+                <p className="font-semibold text-navy-800">No favorites yet</p>
+                <p className="text-sm text-navy-400">Star your planners to find them quickly here.</p>
+              </div>
+            )}
+
+            {activeView === 'trash' && (
+              <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+                <Trash2 className="h-16 w-16 text-navy-200" />
+                <p className="font-semibold text-navy-800">Trash is empty</p>
+                <p className="text-sm text-navy-400">Deleted planners will appear here.</p>
+              </div>
+            )}
+
+            {activeView === 'list' && (<>
             <h2 className="mb-1 text-2xl font-extrabold text-navy-900">My Planners</h2>
             <p className="mb-6 text-sm text-navy-400">Design a powerful planner to help your audience plan, organize and achieve their goals.</p>
 
@@ -249,6 +292,7 @@ export function PlannerEngine({ ownerEmail }: PlannerEngineProps) {
                 ))}
               </div>
             )}
+          </>)}
           </div>
         </div>
 

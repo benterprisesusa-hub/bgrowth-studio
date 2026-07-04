@@ -3,67 +3,79 @@ import type { PlannerConfig, PlannerLayout } from './types';
 import { PLANNER_LAYOUT_OPTIONS } from './types';
 import { cn } from '../../lib/utils';
 
+// SVG mini previews for each layout
+const LAYOUT_PREVIEWS: Record<PlannerLayout, React.ReactNode> = {
+  classic: (
+    <svg viewBox="0 0 80 56" className="h-full w-full">
+      <rect x="4" y="4" width="72" height="8" rx="2" fill="#1061EC" opacity="0.8"/>
+      <rect x="4" y="16" width="50" height="4" rx="1" fill="#CBD5E1"/>
+      <rect x="4" y="22" width="40" height="4" rx="1" fill="#CBD5E1"/>
+      <rect x="4" y="30" width="72" height="6" rx="1" fill="#EFF6FF"/>
+      <rect x="4" y="38" width="72" height="6" rx="1" fill="#EFF6FF"/>
+      <rect x="4" y="46" width="72" height="6" rx="1" fill="#EFF6FF"/>
+    </svg>
+  ),
+  weekly: (
+    <svg viewBox="0 0 80 56" className="h-full w-full">
+      <rect x="4" y="4" width="72" height="6" rx="1" fill="#1061EC" opacity="0.8"/>
+      {[0,1,2,3,4,5,6].map((i) => (
+        <g key={i}>
+          <rect x={4 + i * 11} y="14" width="9" height="5" rx="1" fill="#BFDBFE"/>
+          <rect x={4 + i * 11} y="21" width="9" height="30" rx="1" fill="#EFF6FF"/>
+        </g>
+      ))}
+    </svg>
+  ),
+  monthly: (
+    <svg viewBox="0 0 80 56" className="h-full w-full">
+      <rect x="4" y="4" width="72" height="6" rx="1" fill="#1061EC" opacity="0.8"/>
+      {Array.from({length: 35}).map((_, i) => (
+        <rect key={i} x={4 + (i % 7) * 11} y={14 + Math.floor(i / 7) * 9} width="9" height="7" rx="1"
+          fill={i === 15 ? '#BFDBFE' : '#F1F5F9'}/>
+      ))}
+    </svg>
+  ),
+  goals: (
+    <svg viewBox="0 0 80 56" className="h-full w-full">
+      <circle cx="40" cy="22" r="14" fill="none" stroke="#1061EC" strokeWidth="3" opacity="0.3"/>
+      <circle cx="40" cy="22" r="9" fill="none" stroke="#1061EC" strokeWidth="3" opacity="0.5"/>
+      <circle cx="40" cy="22" r="4" fill="#1061EC"/>
+      <rect x="4" y="40" width="72" height="4" rx="1" fill="#EFF6FF"/>
+      <rect x="4" y="47" width="50" height="4" rx="1" fill="#EFF6FF"/>
+    </svg>
+  ),
+  project: (
+    <svg viewBox="0 0 80 56" className="h-full w-full">
+      <rect x="4" y="4" width="72" height="5" rx="1" fill="#1061EC" opacity="0.8"/>
+      {[72, 55, 72, 40, 65, 30].map((w, i) => (
+        <g key={i}>
+          <rect x="4" y={13 + i * 7} width={w * 0.97} height="5" rx="1"
+            fill={i === 0 ? '#BFDBFE' : i === 2 ? '#BBF7D0' : '#F1F5F9'}/>
+        </g>
+      ))}
+    </svg>
+  ),
+  business: (
+    <svg viewBox="0 0 80 56" className="h-full w-full">
+      <rect x="4" y="4" width="72" height="6" rx="1" fill="#1061EC" opacity="0.8"/>
+      <rect x="4" y="14" width="34" height="18" rx="2" fill="#EFF6FF"/>
+      <rect x="42" y="14" width="34" height="18" rx="2" fill="#EFF6FF"/>
+      <rect x="4" y="36" width="34" height="16" rx="2" fill="#EFF6FF"/>
+      <rect x="42" y="36" width="34" height="16" rx="2" fill="#BFDBFE"/>
+    </svg>
+  ),
+  blank: (
+    <svg viewBox="0 0 80 56" className="h-full w-full">
+      <rect x="4" y="4" width="72" height="48" rx="2" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 2"/>
+      <text x="40" y="30" textAnchor="middle" fontSize="10" fill="#94A3B8">+ Custom</text>
+    </svg>
+  ),
+};
+
 interface Step2LayoutProps {
   config: PlannerConfig;
   onChange: (updated: Partial<PlannerConfig>) => void;
 }
-
-const LAYOUT_PREVIEWS: Record<PlannerLayout, React.ReactNode> = {
-  classic: (
-    <div className="flex flex-col gap-1">
-      {[80, 60, 70, 50].map((w, i) => (
-        <div key={i} className="h-1.5 rounded bg-navy-200" style={{ width: `${w}%` }} />
-      ))}
-    </div>
-  ),
-  weekly: (
-    <div className="grid grid-cols-7 gap-0.5">
-      {Array.from({ length: 7 }).map((_, i) => (
-        <div key={i} className="flex flex-col gap-0.5">
-          <div className="h-1 rounded bg-brand-300" />
-          <div className="h-4 rounded bg-navy-100" />
-        </div>
-      ))}
-    </div>
-  ),
-  monthly: (
-    <div className="grid grid-cols-7 gap-0.5">
-      {Array.from({ length: 28 }).map((_, i) => (
-        <div key={i} className="h-1.5 rounded bg-navy-200" />
-      ))}
-    </div>
-  ),
-  goals: (
-    <div className="flex flex-col gap-1">
-      <div className="h-2 w-3/4 rounded bg-brand-300" />
-      {[60, 80, 40].map((w, i) => (
-        <div key={i} className="flex items-center gap-1">
-          <div className="h-1.5 w-1.5 rounded-full bg-navy-300" />
-          <div className="h-1.5 rounded bg-navy-200" style={{ width: `${w}%` }} />
-        </div>
-      ))}
-    </div>
-  ),
-  project: (
-    <div className="flex flex-col gap-1">
-      {[100, 75, 50, 90, 30].map((w, i) => (
-        <div key={i} className="h-1.5 rounded" style={{ width: `${w}%`, background: i === 0 ? '#1061EC' : '#E3E7EF' }} />
-      ))}
-    </div>
-  ),
-  business: (
-    <div className="grid grid-cols-2 gap-1">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="h-3 rounded bg-navy-100" />
-      ))}
-    </div>
-  ),
-  blank: (
-    <div className="flex h-10 items-center justify-center">
-      <span className="text-[10px] text-navy-300">+ Custom</span>
-    </div>
-  ),
-};
 
 export function Step2Layout({ config, onChange }: Step2LayoutProps) {
   return (
@@ -89,8 +101,8 @@ export function Step2Layout({ config, onChange }: Step2LayoutProps) {
               )}
             >
               {/* Mini preview */}
-              <div className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-navy-50 p-1.5">
-                {LAYOUT_PREVIEWS[layout.id]}
+              <div className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-white p-1">
+                {LAYOUT_PREVIEWS[layout.id as PlannerLayout]}
               </div>
 
               <div className="min-w-0 flex-1">
