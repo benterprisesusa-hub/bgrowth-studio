@@ -158,16 +158,15 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
 
                   <span className="flex shrink-0 items-center gap-1.5">
                     {/* Copy public link */}
-                    <SecondaryButton size="sm" onClick={(e) => handleCopyLink(e, t.templateId)} title="Copy public link" className="hidden sm:flex">
+                    <SecondaryButton size="sm" onClick={(e) => handleCopyLink(e, t.templateId)} title="Copy public link">
                       {copiedId === t.templateId
-                        ? <><Check className="h-3.5 w-3.5 text-emerald-500" /> Copied!</>
-                        : <><Link className="h-3.5 w-3.5" /> Link</>}
+                        ? <><Check className="h-3.5 w-3.5 text-emerald-500" /></>
+                        : <><Link className="h-3.5 w-3.5" /></>}
                     </SecondaryButton>
 
                     {/* Edit */}
-                    <SecondaryButton size="sm" onClick={(e) => handleEdit(e, t)} title="Edit template" className="hidden sm:flex">
+                    <SecondaryButton size="sm" onClick={(e) => handleEdit(e, t)} title="Edit template">
                       <Pencil className="h-3.5 w-3.5" />
-                      Edit
                     </SecondaryButton>
 
                     {/* Delete */}
@@ -175,7 +174,7 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
                       size="sm"
                       onClick={(e) => { e.stopPropagation(); setDeleteTarget(t); }}
                       title="Delete template"
-                      className="hidden text-red-500 hover:border-red-200 hover:bg-red-50 sm:flex"
+                      className="text-red-500 hover:border-red-200 hover:bg-red-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </SecondaryButton>
