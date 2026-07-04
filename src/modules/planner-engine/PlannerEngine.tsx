@@ -66,10 +66,15 @@ export function PlannerEngine({ ownerEmail }: PlannerEngineProps) {
   const handlePublish = async () => {
     if (!config.name) return;
     setIsPublishing(true);
-    await new Promise((r) => setTimeout(r, 1200));
-    handleSaveDraft();
+    await new Promise((r) => setTimeout(r, 800));
+    const updated = drafts.some((d) => d.productId === config.productId)
+      ? drafts.map((d) => (d.productId === config.productId ? config : d))
+      : [...drafts, config];
+    setDrafts(updated);
+    saveDrafts(updated);
     setIsPublishing(false);
     showToast('Planner published! 🎉');
+    setTimeout(() => setActiveView('list'), 800);
   };
 
   const handleNew = () => {

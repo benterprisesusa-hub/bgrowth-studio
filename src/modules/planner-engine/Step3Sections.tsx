@@ -66,7 +66,12 @@ function SortableSection({
           className="w-full bg-transparent text-sm font-semibold text-navy-800 outline-none placeholder:text-navy-300 focus:border-b focus:border-brand"
           placeholder="Section title"
         />
-        <p className="truncate text-xs text-navy-400">{section.description}</p>
+        <input
+          value={section.description}
+          onChange={(e) => onChange({ ...section, description: e.target.value })}
+          className="w-full bg-transparent text-xs text-navy-400 outline-none placeholder:text-navy-300 focus:border-b focus:border-brand"
+          placeholder="Short description..."
+        />
       </div>
 
       {/* Enable/disable toggle */}

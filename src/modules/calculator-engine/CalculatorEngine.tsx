@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Save, Printer, Download, History, Plus, StickyNote, Calculator, TrendingUp, DollarSign, Clock, BarChart2, Star, Trash2, ChevronRight } from 'lucide-react';
-import { CalcField } from './components/CalcField';
-import { ResultsPanel } from './components/ResultsPanel';
-import { DonutChart } from './components/DonutChart';
-import { CalcProgressBar } from './components/CalcProgressBar';
+import { CalcField } from './CalcField';
+import { ResultsPanel } from './ResultsPanel';
+import { DonutChart } from './DonutChart';
+import { CalcProgressBar } from './CalcProgressBar';
 import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
 import { applyBrandTheme } from '../../engine/theme';
 import { Toast } from '../../components/Toast';
-import { cleaningPricingCalc } from './configs/cleaningPricing';
-import { mileageDeductionCalc } from './configs/mileageDeduction';
-import { roiCalc } from './configs/roi';
+import { cleaningPricingCalc } from './cleaningPricing';
+import { mileageDeductionCalc } from './mileageDeduction';
+import { roiCalc } from './roi';
 import type { CalculatorConfig, CalculatorValues } from './types';
 import { cn } from '../../lib/utils';
 
@@ -308,11 +308,9 @@ export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {CALCULATORS.map((calc) => (
-              <button
+              <div
                 key={calc.productId}
-                type="button"
-                onClick={() => setActiveCalc(calc)}
-                className="group flex flex-col gap-4 rounded-2xl border border-navy-100 bg-white p-5 text-left shadow-card transition-all hover:shadow-cardHover"
+                className="group flex flex-col gap-4 rounded-2xl border border-navy-100 bg-white p-5 shadow-card transition-all hover:shadow-cardHover"
               >
                 <div className="flex items-center gap-3">
                   <span
@@ -327,10 +325,34 @@ export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
                   </div>
                 </div>
                 <p className="text-xs leading-relaxed text-navy-500 line-clamp-2">{calc.subtitle}</p>
-                <span className="flex items-center gap-1 text-sm font-semibold text-brand-600 group-hover:gap-2 transition-all">
-                  Open Calculator <ChevronRight className="h-4 w-4" />
-                </span>
-              </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveCalc(calc)}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600"
+                  >
+                    Open <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveCalc(calc)}
+                    title="Edit calculator"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-brand hover:text-brand"
+                  >
+                    <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { if (confirm(`Delete "${calc.name}"?`)) alert('Delete coming soon — calculators are currently built-in configs.'); }}
+                    title="Delete calculator"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-red-200 hover:text-red-500"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
         </div>

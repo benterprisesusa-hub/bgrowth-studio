@@ -89,7 +89,7 @@ export function Step2Layout({ config, onChange }: Step2LayoutProps) {
               )}
             >
               {/* Mini preview */}
-              <div className="flex h-14 w-20 shrink-0 items-center justify-center rounded-lg border border-navy-100 bg-white p-2">
+              <div className="flex h-14 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-navy-100 bg-navy-50 p-1.5">
                 {LAYOUT_PREVIEWS[layout.id]}
               </div>
 

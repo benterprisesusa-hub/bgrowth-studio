@@ -119,5 +119,7 @@ export function formatResult(val: number, type: string, prefix?: string, suffix?
     case 'percentage': base = formatPercent(val); break;
     default: base = val.toFixed(2).replace(/\.00$/, '');
   }
-  return `${prefix ?? ''}${base}${suffix ?? ''}`;
+  // Don't add prefix for currency — formatCurrency already includes $
+  const pre = type === 'currency' ? '' : (prefix ?? '');
+  return `${pre}${base}${suffix ?? ''}`;
 }
