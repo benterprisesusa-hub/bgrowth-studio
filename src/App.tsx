@@ -3,6 +3,7 @@ import { StudioHome } from './studio/StudioHome';
 import { StudioNav } from './studio/StudioNav';
 import { ChecklistBuilderApp } from './modules/checklist-builder/ChecklistBuilderApp';
 import { PlannerEngine } from './modules/planner-engine/PlannerEngine';
+import { PublicFillApp } from './App.public';
 import { applyBrandTheme } from './engine/theme';
 
 type ActiveTool = null | 'checklist' | 'planner';
@@ -17,8 +18,10 @@ interface AppProps {
 }
 
 export function App({ ownerEmail }: AppProps) {
+  const params = new URLSearchParams(window.location.search);
+  const templateId = params.get('template');
+
   const [activeTool, setActiveTool] = useState<ActiveTool>(() => {
-    const params = new URLSearchParams(window.location.search);
     const tool = params.get('tool');
     if (tool === 'checklist' || tool === 'planner') return tool;
     return null;
@@ -32,8 +35,8 @@ export function App({ ownerEmail }: AppProps) {
   }, [activeTool]);
 
   useEffect(() => {
-    if (!activeTool) applyBrandTheme('#1061EC');
-  }, [activeTool]);
+    if (!activeTool && !templateId) applyBrandTheme('#1061EC');
+  }, [activeTool, templateId]);
 
   useEffect(() => {
     document.title = activeTool
@@ -41,19 +44,34 @@ export function App({ ownerEmail }: AppProps) {
       : 'BGrowth Studio';
   }, [activeTool]);
 
-  return (
-    <div className="flex flex-col bg-[#f4f6fb] font-sans">
-      <StudioNav
-        activeTool={activeTool ?? undefined}
-        toolName={activeTool ? TOOL_NAMES[activeTool] : undefined}
-        ownerEmail={ownerEmail}
-        onHome={() => setActiveTool(null)}
-      />
-      <div className="flex-1 overflow-hidden">
-        {!activeTool && <StudioHome ownerEmail={ownerEmail} onSelect={(tool) => setActiveTool(tool as ActiveTool)} />}
-        {activeTool === 'checklist' && <ChecklistBuilderApp ownerEmail={ownerEmail} embedded />}
-        {activeTool === 'planner' && <PlannerEngine ownerEmail={ownerEmail} />}
+  // Public fill mode — ?template=ID (no login needed, for clients)
+  if (templateId) {
+    return <PublicFillApp templateId={templateId} />;
+  }
+
+  // Tool active — fixed full-screen layout
+  if (activeTool) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans bg-[#f4f6fb]">
+        <StudioNav
+          activeTool={activeTool}
+          toolName={TOOL_NAMES[activeTool]}
+          ownerEmail={ownerEmail}
+          onHome={() => setActiveTool(null)}
+        />
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          {activeTool === 'checklist' && <ChecklistBuilderApp ownerEmail={ownerEmail} embedded />}
+          {activeTool === 'planner' && <PlannerEngine ownerEmail={ownerEmail} />}
+        </div>
       </div>
+    );
+  }
+
+  // Home screen — natural document scroll
+  return (
+    <div className="font-sans bg-[#f4f6fb]">
+      <StudioNav ownerEmail={ownerEmail} onHome={() => setActiveTool(null)} />
+      <StudioHome ownerEmail={ownerEmail} onSelect={(tool) => setActiveTool(tool as ActiveTool)} />
     </div>
   );
 }
