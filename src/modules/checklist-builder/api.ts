@@ -1,55 +1,33 @@
 /**
  * API client for the Checklist Builder GAS backend.
  *
- * All calls are GET-based (matching BGrowth Club's existing CORS workaround).
- * Writes pass a JSON payload as a single URL-encoded query param.
- *
- * The base URL is read from import.meta.env.VITE_GAS_URL — the same env
- * variable used by all other BGrowth Club modules.  During local development
- * point it at the mock server (see scripts/mock-gas-server.mjs).
+ * All calls go through /api/gas-proxy (a Vercel serverless function) which
+ * forwards the request to Google Apps Script server-side. This avoids all
+ * CORS and JSONP issues on any browser, device, or incognito mode.
  */
 import type { ChecklistTemplate, ChecklistInstance } from './types';
 import type { ChecklistData } from '../../engine/types';
 
-const BASE = import.meta.env.VITE_GAS_URL as string;
+// In development, point directly at the mock server.
+// In production, use the Vercel proxy.
+const IS_DEV = import.meta.env.DEV;
+const DEV_URL = 'http://localhost:8787';
 
-// -----------------------------------------------------------------------
-// Core JSONP helper — avoids CORS issues with Google Apps Script.
-// GAS doesn't return Access-Control-Allow-Origin headers, so standard
-// fetch() gets blocked by the browser. JSONP works by injecting a
-// <script> tag instead, which is not subject to CORS restrictions.
-// -----------------------------------------------------------------------
-function gasGet<T>(params: Record<string, string>): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const callbackName = `gasCallback_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const url = new URL(BASE);
+async function gasGet<T>(params: Record<string, string>): Promise<T> {
+  let url: URL;
+
+  if (IS_DEV) {
+    url = new URL(DEV_URL);
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-    url.searchParams.set('callback', callbackName);
+  } else {
+    url = new URL('/api/gas-proxy', window.location.origin);
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  }
 
-    const script = document.createElement('script');
-    script.src = url.toString();
-
-    const cleanup = () => {
-      delete (window as Record<string, unknown>)[callbackName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-    };
-
-    (window as Record<string, unknown>)[callbackName] = (response: { ok: boolean; data: T; error?: string }) => {
-      cleanup();
-      if (response.ok) {
-        resolve(response.data);
-      } else {
-        reject(new Error(response.error ?? 'Unknown GAS error'));
-      }
-    };
-
-    script.onerror = () => {
-      cleanup();
-      reject(new Error('Failed to reach the GAS backend. Check your VITE_GAS_URL.'));
-    };
-
-    document.head.appendChild(script);
-  });
+  const res = await fetch(url.toString());
+  const json = (await res.json()) as { ok: boolean; data: T; error?: string };
+  if (!json.ok) throw new Error(json.error ?? 'Unknown GAS error');
+  return json.data;
 }
 
 // -----------------------------------------------------------------------
