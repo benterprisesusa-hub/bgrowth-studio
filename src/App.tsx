@@ -5,6 +5,7 @@ import { StudioHome } from './studio/StudioHome';
 import { StudioNav } from './studio/StudioNav';
 import { ChecklistBuilderApp } from './modules/checklist-builder/ChecklistBuilderApp';
 import { PlannerEngine } from './modules/planner-engine/PlannerEngine';
+import { CalculatorEngine } from './modules/calculator-engine/CalculatorEngine';
 import { ProductHeader } from './components/ProductHeader';
 import { Sidebar } from './components/Sidebar';
 import { WorkflowAccordion } from './engine/components/WorkflowAccordion';
@@ -21,11 +22,12 @@ import { downloadElementAsPdf } from './lib/pdf';
 import { api_getTemplate } from './modules/checklist-builder/api';
 import type { ChecklistConfig, ChecklistData } from './engine/types';
 
-type ActiveTool = null | 'checklist' | 'planner';
+type ActiveTool = null | 'checklist' | 'planner' | 'calculator';
 
 const TOOL_NAMES: Record<string, string> = {
   checklist: 'Checklist Builder',
   planner: 'Planner Engine',
+  calculator: 'Calculator Engine',
 };
 
 // -----------------------------------------------------------------------
@@ -155,7 +157,7 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
 
   const [activeTool, setActiveTool] = useState<ActiveTool>(() => {
     const tool = params.get('tool');
-    if (tool === 'checklist' || tool === 'planner') return tool;
+    if (tool === 'checklist' || tool === 'planner' || tool === 'calculator') return tool;
     return null;
   });
 
@@ -182,6 +184,7 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
       <div style={{ flex: 1, overflow: 'hidden' }}>
         {activeTool === 'checklist' && <ChecklistBuilderApp ownerEmail={ownerEmail} embedded />}
         {activeTool === 'planner' && <PlannerEngine ownerEmail={ownerEmail} />}
+        {activeTool === 'calculator' && <CalculatorEngine ownerEmail={ownerEmail} />}
       </div>
     </div>
   );
