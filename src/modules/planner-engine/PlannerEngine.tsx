@@ -9,7 +9,7 @@ import { Step3Sections } from './Step3Sections';
 import { Step4Customize, Step5Review } from './Step4And5';
 import { PlannerPreview } from './PlannerPreview';
 import { Toast } from '../../components/Toast';
-import { emptyPlannerConfig } from './types';
+import { emptyPlannerConfig, LAYOUT_SECTIONS } from './types';
 import type { PlannerConfig } from './types';
 import { cn } from '../../lib/utils';
 
@@ -51,7 +51,17 @@ export function PlannerEngine({ ownerEmail }: PlannerEngineProps) {
   }, []);
 
   const updateConfig = (partial: Partial<PlannerConfig>) => {
-    setConfig((c) => ({ ...c, ...partial }));
+    setConfig((c) => {
+      const updated = { ...c, ...partial };
+      // When layout changes, update sections to match the new layout
+      if (partial.layout && partial.layout !== c.layout) {
+        const newSections = LAYOUT_SECTIONS[partial.layout];
+        if (newSections && newSections.length > 0) {
+          updated.sections = newSections;
+        }
+      }
+      return updated;
+    });
   };
 
   const handleSaveDraft = () => {
