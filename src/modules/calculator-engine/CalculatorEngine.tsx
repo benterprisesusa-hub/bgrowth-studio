@@ -1,0 +1,340 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Save, Printer, Download, History, Plus, StickyNote, Calculator, TrendingUp, DollarSign, Clock, BarChart2, Star, Trash2, ChevronRight } from 'lucide-react';
+import { CalcField } from './components/CalcField';
+import { ResultsPanel } from './components/ResultsPanel';
+import { DonutChart } from './components/DonutChart';
+import { CalcProgressBar } from './components/CalcProgressBar';
+import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
+import { applyBrandTheme } from '../../engine/theme';
+import { Toast } from '../../components/Toast';
+import { cleaningPricingCalc } from './configs/cleaningPricing';
+import { mileageDeductionCalc } from './configs/mileageDeduction';
+import { roiCalc } from './configs/roi';
+import type { CalculatorConfig, CalculatorValues } from './types';
+import { cn } from '../../lib/utils';
+
+// -----------------------------------------------------------------------
+// Available calculators (add new configs here)
+// -----------------------------------------------------------------------
+const CALCULATORS: CalculatorConfig[] = [
+  cleaningPricingCalc,
+  mileageDeductionCalc,
+  roiCalc,
+];
+
+const STORAGE_KEY = 'bgrowth.studio.calculator.values';
+
+function loadValues(productId: string): CalculatorValues | null {
+  try { return JSON.parse(localStorage.getItem(`${STORAGE_KEY}.${productId}`) ?? 'null'); } catch { return null; }
+}
+function saveValues(productId: string, values: CalculatorValues) {
+  try { localStorage.setItem(`${STORAGE_KEY}.${productId}`, JSON.stringify(values)); } catch { /* */ }
+}
+function clearValues(productId: string) {
+  try { localStorage.removeItem(`${STORAGE_KEY}.${productId}`); } catch { /* */ }
+}
+
+// -----------------------------------------------------------------------
+// Single calculator view
+// -----------------------------------------------------------------------
+interface CalcViewProps {
+  config: CalculatorConfig;
+  onBack: () => void;
+}
+
+function CalcView({ config, onBack }: CalcViewProps) {
+  const [values, setValues] = useState<CalculatorValues>(
+    () => loadValues(config.productId) ?? buildDefaultValues(config)
+  );
+  const [notes, setNotes] = useState('');
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const results = computeAll(config, values);
+  const completion = calcCompletion(config, values);
+
+  useEffect(() => {
+    applyBrandTheme(config.primaryColor);
+  }, [config.primaryColor]);
+
+  // Autosave
+  useEffect(() => {
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => saveValues(config.productId, values), 600);
+    return () => { if (autosaveTimer.current) clearTimeout(autosaveTimer.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(values)]);
+
+  const showToast = useCallback((msg: string) => {
+    setToast({ message: msg, visible: true });
+    setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2200);
+  }, []);
+
+  const handleChange = (id: string, val: string | number) => {
+    setValues((prev) => ({ ...prev, [id]: val }));
+  };
+
+  const handleReset = () => {
+    clearValues(config.productId);
+    setValues(buildDefaultValues(config));
+    showToast('Calculator reset');
+  };
+
+  const handleSave = () => {
+    saveValues(config.productId, values);
+    showToast('Saved ✓');
+  };
+
+  const handlePrint = () => window.print();
+
+  return (
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Top toolbar */}
+      <div className="flex shrink-0 items-center justify-between border-b border-navy-100 bg-white px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <button type="button" onClick={onBack} className="text-sm font-medium text-navy-500 hover:text-navy-800">
+            ← Calculators
+          </button>
+          <span className="text-navy-200">/</span>
+          <div className="min-w-0">
+            <p className="truncate text-[15px] font-bold text-navy-900">{config.name}</p>
+            <p className="hidden text-xs text-navy-400 sm:block">{config.subtitle}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button onClick={handleSave} className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-1.5 text-xs font-medium text-navy-600 hover:bg-navy-50">
+            <Save className="h-3.5 w-3.5" /> Save
+          </button>
+          <button onClick={handlePrint} className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-1.5 text-xs font-medium text-navy-600 hover:bg-navy-50">
+            <Printer className="h-3.5 w-3.5" /> Print
+          </button>
+          <button onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50">
+            <History className="h-3.5 w-3.5" /> Reset
+          </button>
+          <button className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600">
+            <Plus className="h-3.5 w-3.5" /> New Calculation
+          </button>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Center — inputs + results */}
+        <div className="flex-1 overflow-y-auto bg-[#f4f6fb] p-4">
+          <div className="mx-auto flex max-w-4xl flex-col gap-4">
+            {/* Progress bar */}
+            <CalcProgressBar
+              completion={completion}
+              config={config}
+              results={results}
+              primaryColor={config.primaryColor}
+            />
+
+            {/* Sections + Results side by side on large screens */}
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {/* Input sections */}
+              <div className="flex flex-col gap-4">
+                {config.sections.map((section) => {
+                  const Icon = section.icon === 'dollar-sign' ? DollarSign : section.icon === 'map-pin' ? TrendingUp : Calculator;
+                  return (
+                    <div key={section.id} className="rounded-2xl border border-navy-100 bg-white p-5 shadow-card">
+                      <div className="mb-4">
+                        <p className="text-xs font-bold uppercase tracking-wider text-navy-400">
+                          {section.number}. {section.title.toUpperCase()}
+                        </p>
+                        {section.description && (
+                          <p className="mt-0.5 text-sm text-navy-500">{section.description}</p>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {section.fields.map((field) => (
+                          <div key={field.id} className={cn(field.type === 'select' && section.fields.length <= 4 ? 'col-span-2 sm:col-span-1' : '')}>
+                            <CalcField
+                              field={field}
+                              value={values[field.id] ?? field.defaultValue ?? ''}
+                              onChange={handleChange}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Section total if it's the costs section */}
+                      {section.id === 'costs' && (
+                        <div className="mt-4 rounded-lg bg-navy-50 px-4 py-2.5">
+                          <span className="text-xs text-navy-500">Total Job Cost</span>
+                          <p className="text-xl font-extrabold text-brand">
+                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(results['total_cost'] ?? 0)}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Results */}
+              <div className="flex flex-col gap-4">
+                <ResultsPanel config={config} results={results} primaryColor={config.primaryColor} />
+
+                {/* Notes */}
+                {config.notesEnabled && (
+                  <div className="rounded-2xl border border-navy-100 bg-white p-4 shadow-card">
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <StickyNote className="h-4 w-4 text-navy-400" />
+                      <p className="text-xs font-bold uppercase tracking-wider text-navy-400">Notes</p>
+                    </div>
+                    <textarea
+                      rows={4}
+                      placeholder="Add your notes here..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      maxLength={500}
+                      className="w-full resize-none rounded-lg border border-navy-100 p-2.5 text-sm text-navy-700 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30"
+                    />
+                    <p className="mt-1 text-right text-xs text-navy-300">{notes.length} / 500</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right panel — charts + quick calcs */}
+        <div className="hidden w-64 shrink-0 overflow-y-auto border-l border-navy-100 bg-white p-4 xl:flex xl:flex-col xl:gap-4">
+          {/* Charts */}
+          {(config.charts ?? []).map((chart) => {
+            const slices = chart.slices.map((s) => ({
+              label: s.label,
+              value: results[s.formulaId] ?? 0,
+              color: s.color,
+            }));
+            return <DonutChart key={chart.id} title={chart.title} slices={slices} />;
+          })}
+
+          {/* Quick calculations */}
+          {(config.quickCalcs ?? []).length > 0 && (
+            <div className="rounded-xl border border-navy-100 bg-white p-4">
+              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-navy-400">Quick Calculations</p>
+              <div className="flex flex-col gap-2">
+                {(config.quickCalcs ?? []).map((qc) => (
+                  <div key={qc.label} className="flex items-center justify-between border-b border-navy-50 pb-1.5 last:border-0">
+                    <span className="text-xs text-navy-500">{qc.label}</span>
+                    <span className="text-xs font-semibold text-navy-800">
+                      {formatResult(results[qc.formulaId] ?? 0, qc.type, qc.prefix, qc.suffix)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Toast message={toast.message} visible={toast.visible} />
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// Calculator list / dashboard
+// -----------------------------------------------------------------------
+interface CalculatorEngineProps {
+  ownerEmail: string;
+}
+
+export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
+  const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(null);
+
+  if (activeCalc) {
+    return <CalcView config={activeCalc} onBack={() => setActiveCalc(null)} />;
+  }
+
+  return (
+    <div className="flex h-full overflow-hidden">
+      {/* Sidebar */}
+      <aside className="flex w-56 shrink-0 flex-col border-r border-navy-100 bg-white">
+        <div className="p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-navy-400">Calculators</p>
+        </div>
+        {[
+          { icon: <Calculator className="h-4 w-4" />, label: 'My Calculations', active: true },
+          { icon: <BarChart2 className="h-4 w-4" />, label: 'Templates' },
+          { icon: <Star className="h-4 w-4" />, label: 'Favorites' },
+          { icon: <History className="h-4 w-4" />, label: 'Recent' },
+          { icon: <Trash2 className="h-4 w-4" />, label: 'Trash' },
+        ].map((item) => (
+          <button key={item.label} type="button" className={cn('flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-medium transition-colors', item.active ? 'border-l-2 border-brand bg-brand-50 text-brand-700' : 'text-navy-500 hover:bg-navy-50 hover:text-navy-800')}>
+            {item.icon} {item.label}
+          </button>
+        ))}
+
+        <div className="mt-4 border-t border-navy-100 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-navy-400">Categories</p>
+        </div>
+        {['Pricing Calculators', 'Profit Calculators', 'Cost Calculators', 'Time Calculators', 'Investment Calculators', 'Other Calculators'].map((cat) => (
+          <button key={cat} type="button" className="px-4 py-2 text-left text-sm text-navy-500 hover:bg-navy-50 hover:text-navy-800">
+            {cat}
+          </button>
+        ))}
+
+        <div className="mx-3 mt-auto mb-4 rounded-xl border border-brand-100 bg-brand-50 p-3">
+          <p className="text-xs font-semibold text-navy-800">Need Help?</p>
+          <p className="mt-1 text-[11px] text-navy-500">Learn how to use this calculator and get accurate results.</p>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between border-b border-navy-100 bg-white px-6 py-3">
+          <div>
+            <h1 className="text-xl font-bold text-navy-900">Calculator Engine</h1>
+            <p className="text-sm text-navy-400">Calculate. Analyze. Price. Profit.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50">
+              <BarChart2 className="h-4 w-4" /> Templates
+            </button>
+            <button className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+              <Plus className="h-4 w-4" /> New Calculator
+            </button>
+          </div>
+        </div>
+
+        {/* Grid of calculators */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <h2 className="mb-1 text-2xl font-extrabold text-navy-900">My Calculators</h2>
+          <p className="mb-6 text-sm text-navy-400">Choose a calculator to get started.</p>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {CALCULATORS.map((calc) => (
+              <button
+                key={calc.productId}
+                type="button"
+                onClick={() => setActiveCalc(calc)}
+                className="group flex flex-col gap-4 rounded-2xl border border-navy-100 bg-white p-5 text-left shadow-card transition-all hover:shadow-cardHover"
+              >
+                <div className="flex items-center gap-3">
+                  <span
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-white"
+                    style={{ background: calc.primaryColor }}
+                  >
+                    <Calculator className="h-6 w-6" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[15px] font-bold text-navy-900">{calc.name}</p>
+                    <p className="text-[11px] text-navy-400">{calc.category}</p>
+                  </div>
+                </div>
+                <p className="text-xs leading-relaxed text-navy-500 line-clamp-2">{calc.subtitle}</p>
+                <span className="flex items-center gap-1 text-sm font-semibold text-brand-600 group-hover:gap-2 transition-all">
+                  Open Calculator <ChevronRight className="h-4 w-4" />
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
