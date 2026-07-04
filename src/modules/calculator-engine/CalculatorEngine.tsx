@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Save, Printer, Download, History, Plus, StickyNote, Calculator, TrendingUp, DollarSign, Clock, BarChart2, Star, Trash2, ChevronRight } from 'lucide-react';
-import { CalcField } from './components/CalcField';
-import { ResultsPanel } from './components/ResultsPanel';
-import { DonutChart } from './components/DonutChart';
-import { CalcProgressBar } from './components/CalcProgressBar';
+import { CalcField } from './CalcField';
+import { ResultsPanel } from './ResultsPanel';
+import { DonutChart } from './DonutChart';
+import { CalcProgressBar } from './CalcProgressBar';
+import { CalculatorBuilder } from './CalculatorBuilder';
 import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
 import { applyBrandTheme } from '../../engine/theme';
 import { Toast } from '../../components/Toast';
-import { cleaningPricingCalc } from './configs/cleaningPricing';
-import { mileageDeductionCalc } from './configs/mileageDeduction';
-import { roiCalc } from './configs/roi';
+import { cleaningPricingCalc } from './cleaningPricing';
+import { mileageDeductionCalc } from './mileageDeduction';
+import { roiCalc } from './roi';
 import type { CalculatorConfig, CalculatorValues } from './types';
 import { cn } from '../../lib/utils';
 
@@ -242,8 +243,27 @@ interface CalculatorEngineProps {
   ownerEmail: string;
 }
 
-export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
+export function CalculatorEngine({ ownerEmail }: CalculatorEngineProps) {
   const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(null);
+  const [showBuilder, setShowBuilder] = useState(false);
+
+  if (showBuilder) {
+    return (
+      <div className="h-full flex flex-col">
+        <div className="shrink-0 flex items-center gap-3 border-b border-navy-100 bg-white px-4 py-2.5">
+          <button type="button" onClick={() => setShowBuilder(false)}
+            className="text-sm font-medium text-navy-500 hover:text-navy-800">
+            ← My Calculators
+          </button>
+          <span className="text-navy-200">/</span>
+          <span className="text-sm font-semibold text-navy-800">Calculator Builder</span>
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <CalculatorBuilder ownerEmail={ownerEmail} />
+        </div>
+      </div>
+    );
+  }
 
   if (activeCalc) {
     return <CalcView config={activeCalc} onBack={() => setActiveCalc(null)} />;
@@ -295,7 +315,7 @@ export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
             <button className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50">
               <BarChart2 className="h-4 w-4" /> Templates
             </button>
-            <button className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+            <button className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600" onClick={() => setShowBuilder(true)}>
               <Plus className="h-4 w-4" /> New Calculator
             </button>
           </div>
