@@ -42,7 +42,7 @@ export function App({ ownerEmail }: AppProps) {
   }, [activeTool]);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#f4f6fb] font-sans">
+    <div className="flex flex-col bg-[#f4f6fb] font-sans">
       <StudioNav
         activeTool={activeTool ?? undefined}
         toolName={activeTool ? TOOL_NAMES[activeTool] : undefined}
