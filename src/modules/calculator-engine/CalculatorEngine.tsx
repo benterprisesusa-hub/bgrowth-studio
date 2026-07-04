@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Save, Printer, Download, History, Plus, StickyNote, Calculator, TrendingUp, DollarSign, Clock, BarChart2, Star, Trash2, ChevronRight } from 'lucide-react';
-import { CalcField } from './CalcField';
-import { ResultsPanel } from './ResultsPanel';
-import { DonutChart } from './DonutChart';
-import { CalcProgressBar } from './CalcProgressBar';
+import { CalcField } from './components/CalcField';
+import { ResultsPanel } from './components/ResultsPanel';
+import { DonutChart } from './components/DonutChart';
+import { CalcProgressBar } from './components/CalcProgressBar';
 import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
 import { applyBrandTheme } from '../../engine/theme';
 import { Toast } from '../../components/Toast';
-import { cleaningPricingCalc } from './cleaningPricing';
-import { mileageDeductionCalc } from './mileageDeduction';
-import { roiCalc } from './roi';
+import { cleaningPricingCalc } from './configs/cleaningPricing';
+import { mileageDeductionCalc } from './configs/mileageDeduction';
+import { roiCalc } from './configs/roi';
 import type { CalculatorConfig, CalculatorValues } from './types';
 import { cn } from '../../lib/utils';
 
