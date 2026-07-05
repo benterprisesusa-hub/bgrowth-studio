@@ -3,6 +3,7 @@ import { Save, Printer, Download, History, Plus, StickyNote, Calculator, Trendin
 import { CalcField } from './components/CalcField';
 import { ResultsPanel } from './components/ResultsPanel';
 import { DonutChart } from './components/DonutChart';
+import { ALL_CALCULATORS } from './allCalculators';
 import { CalculatorBuilder } from './builder/CalculatorBuilder';
 import { CalcProgressBar } from './components/CalcProgressBar';
 import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
@@ -71,8 +72,6 @@ function CalcView({ config, onBack }: CalcViewProps) {
   );
   const [notes, setNotes] = useState('');
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const printRef = useRef<HTMLDivElement>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const results = computeAll(config, values);
@@ -82,6 +81,7 @@ function CalcView({ config, onBack }: CalcViewProps) {
     applyBrandTheme(config.primaryColor);
   }, [config.primaryColor]);
 
+  // Autosave
   useEffect(() => {
     if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => saveValues(config.productId, values), 600);
@@ -111,28 +111,6 @@ function CalcView({ config, onBack }: CalcViewProps) {
 
   const handlePrint = () => window.print();
 
-  const handleDownloadPdf = async () => {
-    if (!printRef.current) return;
-    setIsGeneratingPdf(true);
-    try {
-      const html2pdf = (await import('html2pdf.js')).default;
-      html2pdf()
-        .set({
-          margin: 10,
-          filename: `${config.name.replace(/\s+/g, '-')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        })
-        .from(printRef.current)
-        .save()
-        .then(() => { setIsGeneratingPdf(false); showToast('PDF downloaded ✓'); });
-    } catch {
-      setIsGeneratingPdf(false);
-      showToast('PDF failed — try Print instead');
-    }
-  };
-
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Top toolbar */}
@@ -153,9 +131,6 @@ function CalcView({ config, onBack }: CalcViewProps) {
           </button>
           <button onClick={handlePrint} className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-1.5 text-xs font-medium text-navy-600 hover:bg-navy-50">
             <Printer className="h-3.5 w-3.5" /> Print
-          </button>
-          <button onClick={handleDownloadPdf} disabled={isGeneratingPdf} className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-1.5 text-xs font-medium text-navy-600 hover:bg-navy-50 disabled:opacity-50">
-            <Download className="h-3.5 w-3.5" /> {isGeneratingPdf ? 'Generating...' : 'PDF'}
           </button>
           <button onClick={handleReset} className="flex items-center gap-1.5 rounded-lg border border-red-100 px-3 py-1.5 text-xs font-medium text-red-500 hover:bg-red-50">
             <History className="h-3.5 w-3.5" /> Reset
@@ -279,54 +254,6 @@ function CalcView({ config, onBack }: CalcViewProps) {
         </div>
       </div>
 
-      {/* Hidden printable PDF content */}
-      <div ref={printRef} className="printable-summary" style={{ fontFamily: 'Arial, sans-serif', padding: '20px' }}>
-        <div style={{ borderBottom: '3px solid ' + config.primaryColor, paddingBottom: '12px', marginBottom: '20px' }}>
-          <h1 style={{ color: config.primaryColor, fontSize: '22px', margin: 0 }}>{config.name}</h1>
-          <p style={{ color: '#64748b', fontSize: '13px', margin: '4px 0 0' }}>{config.subtitle}</p>
-          <p style={{ color: '#94a3b8', fontSize: '11px', margin: '4px 0 0' }}>Generated: {new Date().toLocaleDateString()}</p>
-        </div>
-        {config.sections.map(section => (
-          <div key={section.id} style={{ marginBottom: '20px' }}>
-            <h3 style={{ color: '#0f172a', fontSize: '14px', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
-              {section.number}. {section.title}
-            </h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <tbody>
-                {section.fields.map(field => (
-                  <tr key={field.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '6px 8px', color: '#475569', width: '50%' }}>{field.label}</td>
-                    <td style={{ padding: '6px 8px', color: '#0f172a', fontWeight: 'bold' }}>
-                      {field.prefix}{String(values[field.id] ?? field.defaultValue ?? '')}{field.suffix}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ))}
-        <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px', marginTop: '20px' }}>
-          <h3 style={{ color: '#0f172a', fontSize: '14px', margin: '0 0 12px' }}>Results</h3>
-          {config.results.map(r => (
-            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #e2e8f0', fontSize: '13px' }}>
-              <span style={{ color: '#475569' }}>{r.label}</span>
-              <span style={{ fontWeight: 'bold', color: r.highlight ? config.primaryColor : '#0f172a' }}>
-                {formatResult(results[r.formulaId] ?? 0, r.type, r.prefix, r.suffix)}
-              </span>
-            </div>
-          ))}
-        </div>
-        {notes && (
-          <div style={{ marginTop: '16px', padding: '12px', border: '1px solid #e2e8f0', borderRadius: '8px' }}>
-            <h4 style={{ fontSize: '12px', color: '#475569', margin: '0 0 6px' }}>Notes</h4>
-            <p style={{ fontSize: '12px', color: '#0f172a', margin: 0 }}>{notes}</p>
-          </div>
-        )}
-        <p style={{ textAlign: 'center', fontSize: '10px', color: '#94a3b8', marginTop: '24px' }}>
-          Generated by BGrowth Studio™ · bgrowth-studio.vercel.app
-        </p>
-      </div>
-
       <Toast message={toast.message} visible={toast.visible} />
     </div>
   );
@@ -342,18 +269,10 @@ interface CalculatorEngineProps {
 
 export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEngineProps) {
   const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(
-    () => initialCalcId ? CALCULATORS.find(c => c.productId === initialCalcId) ?? null : null
+    () => initialCalcId ? ALL_CALCULATORS.find(c => c.productId === initialCalcId) ?? null : null
   );
   const [showBuilder, setShowBuilder] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [showImport, setShowImport] = useState(false);
-  const [importJson, setImportJson] = useState('');
-  const [importError, setImportError] = useState('');
-  const [customCalcs, setCustomCalcs] = useState<CalculatorConfig[]>(() => {
-    try { return JSON.parse(localStorage.getItem('bgrowth.custom.calculators') ?? '[]'); } catch { return []; }
-  });
-
-  const allCalcs = [...ALL_CALCULATORS, ...customCalcs];
 
   const handleCopyLink = (productId: string) => {
     const url = `${window.location.origin}/?calc=${productId}`;
@@ -361,24 +280,6 @@ export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEng
       setCopiedId(productId);
       setTimeout(() => setCopiedId(null), 2000);
     });
-  };
-
-  const handleImport = () => {
-    try {
-      const config = JSON.parse(importJson) as CalculatorConfig;
-      if (!config.productId || !config.name || !config.sections || !config.formulas) {
-        setImportError('Invalid calculator format. Make sure it has productId, name, sections and formulas.');
-        return;
-      }
-      const updated = [...customCalcs.filter(c => c.productId !== config.productId), config];
-      setCustomCalcs(updated);
-      localStorage.setItem('bgrowth.custom.calculators', JSON.stringify(updated));
-      setShowImport(false);
-      setImportJson('');
-      setImportError('');
-    } catch {
-      setImportError('Invalid JSON. Please check the format and try again.');
-    }
   };
 
   if (showBuilder) {
@@ -391,33 +292,6 @@ export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEng
 
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Import Modal */}
-      {showImport && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-1 text-lg font-bold text-navy-900">Import Calculator</h2>
-            <p className="mb-4 text-sm text-navy-400">Paste the calculator JSON config below.</p>
-            <textarea
-              rows={12}
-              value={importJson}
-              onChange={(e) => { setImportJson(e.target.value); setImportError(''); }}
-              placeholder={'{\n  "productId": "my-calculator",\n  "name": "My Calculator",\n  ...\n}'}
-              className="w-full resize-none rounded-xl border border-navy-100 p-3 font-mono text-xs text-navy-700 focus:border-brand focus:outline-none"
-            />
-            {importError && <p className="mt-2 text-xs text-red-500">{importError}</p>}
-            <div className="mt-4 flex gap-3">
-              <button type="button" onClick={() => { setShowImport(false); setImportJson(''); setImportError(''); }}
-                className="flex-1 rounded-xl border border-navy-200 py-2.5 text-sm font-semibold text-navy-700 hover:bg-navy-50">
-                Cancel
-              </button>
-              <button type="button" onClick={handleImport} disabled={!importJson.trim()}
-                className="flex-1 rounded-xl bg-brand py-2.5 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-50">
-                Add to Studio
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Sidebar */}
       <aside className="flex w-56 shrink-0 flex-col border-r border-navy-100 bg-white">
         <div className="p-4">
@@ -459,9 +333,8 @@ export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEng
             <p className="text-sm text-navy-400">Calculate. Analyze. Price. Profit.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50"
-              onClick={() => setShowImport(true)}>
-              <Plus className="h-4 w-4" /> Import JSON
+            <button className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-2 text-sm font-medium text-navy-600 hover:bg-navy-50">
+              <BarChart2 className="h-4 w-4" /> Templates
             </button>
             <button className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600" onClick={() => setShowBuilder(true)}>
               <Plus className="h-4 w-4" /> New Calculator
@@ -475,7 +348,7 @@ export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEng
           <p className="mb-6 text-sm text-navy-400">Choose a calculator to get started.</p>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {allCalcs.map((calc) => (
+            {CALCULATORS.map((calc) => (
               <div
                 key={calc.productId}
                 className="group flex flex-col gap-4 rounded-2xl border border-navy-100 bg-white p-5 shadow-card transition-all hover:shadow-cardHover"
