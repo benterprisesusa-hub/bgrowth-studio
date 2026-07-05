@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Save, Printer, Download, History, Plus, StickyNote, Calculator, TrendingUp, DollarSign, Clock, BarChart2, Star, Trash2, ChevronRight } from 'lucide-react';
-import { CalcField } from './CalcField';
-import { ResultsPanel } from './ResultsPanel';
-import { DonutChart } from './DonutChart';
-import { CalcProgressBar } from './CalcProgressBar';
-import { CalculatorBuilder } from './CalculatorBuilder';
+import { CalcField } from './components/CalcField';
+import { ResultsPanel } from './components/ResultsPanel';
+import { DonutChart } from './components/DonutChart';
+import { CalculatorBuilder } from './builder/CalculatorBuilder';
+import { CalcProgressBar } from './components/CalcProgressBar';
 import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
 import { applyBrandTheme } from '../../engine/theme';
 import { Toast } from '../../components/Toast';
-import { cleaningPricingCalc } from './cleaningPricing';
-import { mileageDeductionCalc } from './mileageDeduction';
-import { roiCalc } from './roi';
+import { cleaningPricingCalc } from './configs/cleaningPricing';
+import { mileageDeductionCalc } from './configs/mileageDeduction';
+import { roiCalc } from './configs/roi';
 import type { CalculatorConfig, CalculatorValues } from './types';
 import { cn } from '../../lib/utils';
 
@@ -243,26 +243,12 @@ interface CalculatorEngineProps {
   ownerEmail: string;
 }
 
-export function CalculatorEngine({ ownerEmail }: CalculatorEngineProps) {
+export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
   const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
 
   if (showBuilder) {
-    return (
-      <div className="h-full flex flex-col">
-        <div className="shrink-0 flex items-center gap-3 border-b border-navy-100 bg-white px-4 py-2.5">
-          <button type="button" onClick={() => setShowBuilder(false)}
-            className="text-sm font-medium text-navy-500 hover:text-navy-800">
-            ← My Calculators
-          </button>
-          <span className="text-navy-200">/</span>
-          <span className="text-sm font-semibold text-navy-800">Calculator Builder</span>
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <CalculatorBuilder ownerEmail={ownerEmail} />
-        </div>
-      </div>
-    );
+    return <CalculatorBuilder onBack={() => setShowBuilder(false)} />;
   }
 
   if (activeCalc) {
