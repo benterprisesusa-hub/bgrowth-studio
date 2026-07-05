@@ -3,6 +3,7 @@ import { Save, Printer, Download, History, Plus, StickyNote, Calculator, Trendin
 import { CalcField } from './components/CalcField';
 import { ResultsPanel } from './components/ResultsPanel';
 import { DonutChart } from './components/DonutChart';
+import { ALL_CALCULATORS } from './allCalculators';
 import { CalculatorBuilder } from './builder/CalculatorBuilder';
 import { CalcProgressBar } from './components/CalcProgressBar';
 import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
@@ -263,10 +264,13 @@ function CalcView({ config, onBack }: CalcViewProps) {
 // -----------------------------------------------------------------------
 interface CalculatorEngineProps {
   ownerEmail: string;
+  initialCalcId?: string;
 }
 
-export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
-  const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(null);
+export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEngineProps) {
+  const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(
+    () => initialCalcId ? ALL_CALCULATORS.find(c => c.productId === initialCalcId) ?? null : null
+  );
   const [showBuilder, setShowBuilder] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 

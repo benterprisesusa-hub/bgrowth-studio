@@ -21,6 +21,7 @@ import { loadFormData, saveFormData, clearFormData, loadOpenSection, saveOpenSec
 import { downloadElementAsPdf } from './lib/pdf';
 import { api_getTemplate } from './modules/checklist-builder/api';
 import type { ChecklistConfig, ChecklistData } from './engine/types';
+import { ALL_CALCULATORS } from './modules/calculator-engine/allCalculators';
 
 type ActiveTool = null | 'checklist' | 'planner' | 'calculator';
 
@@ -149,11 +150,38 @@ function PublicFillInner({ config, storageId }: { config: ChecklistConfig; stora
 }
 
 // -----------------------------------------------------------------------
-// Main App
+// Public Calculator Fill — renders a calculator from ?calc=ID
+// -----------------------------------------------------------------------
+function PublicCalcFill({ calcId }: { calcId: string }) {
+  const calc = ALL_CALCULATORS.find((c) => c.productId === calcId);
+
+  useEffect(() => {
+    if (calc) {
+      applyBrandTheme(calc.primaryColor);
+      document.title = `${calc.name} | BGrowth Club`;
+    }
+  }, [calc]);
+
+  if (!calc) return (
+    <div className="flex h-screen flex-col items-center justify-center gap-3 bg-[#f4f6fb] text-center">
+      <p className="text-lg font-bold text-navy-800">Calculator not found</p>
+      <p className="text-sm text-navy-400">The link may be invalid.</p>
+    </div>
+  );
+
+  // Open CalculatorEngine directly showing this calculator
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans bg-[#f4f6fb]">
+      <CalculatorEngine ownerEmail="" initialCalcId={calcId} />
+    </div>
+  );
+}
+
 // -----------------------------------------------------------------------
 export function App({ ownerEmail }: { ownerEmail: string }) {
   const params = new URLSearchParams(window.location.search);
   const templateId = params.get('template');
+  const calcId = params.get('calc');
 
   const [activeTool, setActiveTool] = useState<ActiveTool>(() => {
     const tool = params.get('tool');
@@ -169,14 +197,16 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
   }, [activeTool]);
 
   useEffect(() => {
-    if (!activeTool && !templateId) applyBrandTheme('#1061EC');
-  }, [activeTool, templateId]);
+    if (!activeTool && !templateId && !calcId) applyBrandTheme('#1061EC');
+  }, [activeTool, templateId, calcId]);
 
   useEffect(() => {
     document.title = activeTool ? `${TOOL_NAMES[activeTool]} | BGrowth Studio` : 'BGrowth Studio';
   }, [activeTool]);
 
   if (templateId) return <PublicFill templateId={templateId} />;
+
+  if (calcId) return <PublicCalcFill calcId={calcId} />;
 
   if (activeTool) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans bg-[#f4f6fb]">
