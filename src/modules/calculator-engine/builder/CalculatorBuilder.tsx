@@ -65,16 +65,52 @@ export function CalculatorBuilder({ onBack, initialConfig, ownerEmail = 'benterp
   }, [aiPrompt]);
 
   const handleSave = () => {
-    const drafts = JSON.parse(localStorage.getItem('bgrowth.calculator.drafts') ?? '[]');
-    const existing = drafts.findIndex((d: any) => d.details?.name === config.details.name);
-    if (existing >= 0) drafts[existing] = config;
-    else drafts.push(config);
-    localStorage.setItem('bgrowth.calculator.drafts', JSON.stringify(drafts));
+    const DRAFTS_KEY = 'bgrowth.calculator.drafts';
+    const drafts = JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? '[]');
+    const existingIndex = drafts.findIndex((d: any) => d.id === config.details.name);
+    const draft = {
+      id: config.details.name || `calc-${Date.now()}`,
+      details: config.details,
+      categories: config.categories,
+      fields: config.fields,
+      formulas: config.formulas,
+      resultCards: config.resultCards,
+      charts: config.charts,
+      recommendations: config.recommendations,
+      publishSettings: { status: 'draft', allowSaveResults: true, allowPdfExport: true, allowPrint: true, allowShare: true },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      uses: 0,
+    };
+    if (existingIndex >= 0) drafts[existingIndex] = { ...drafts[existingIndex], ...draft, updatedAt: new Date().toISOString() };
+    else drafts.push(draft);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
     alert('Saved ✓');
   };
 
-  const handlePublish = () => handleSave();
-  const handleReset = () => { if (confirm('Reset calculator?')) setConfig(DEFAULT_CONFIG); };
+  const handlePublish = () => {
+    const DRAFTS_KEY = 'bgrowth.calculator.drafts';
+    const drafts = JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? '[]');
+    const existingIndex = drafts.findIndex((d: any) => d.id === config.details.name);
+    const draft = {
+      id: config.details.name || `calc-${Date.now()}`,
+      details: config.details,
+      categories: config.categories,
+      fields: config.fields,
+      formulas: config.formulas,
+      resultCards: config.resultCards,
+      charts: config.charts,
+      recommendations: config.recommendations,
+      publishSettings: { status: 'public', allowSaveResults: true, allowPdfExport: true, allowPrint: true, allowShare: true },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      uses: 0,
+    };
+    if (existingIndex >= 0) drafts[existingIndex] = { ...drafts[existingIndex], ...draft, updatedAt: new Date().toISOString() };
+    else drafts.push(draft);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
+    alert('Published! 🎉');
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden" style={{ fontFamily: 'Poppins, sans-serif' }}>
