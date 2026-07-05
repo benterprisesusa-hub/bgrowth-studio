@@ -1507,18 +1507,24 @@ export default function WorkspaceSteps({
   // Dashboard Page Renderer
   const renderDashboard = () => {
     // Recent calculators inside dashboard
-    const listItems = [
-      { id: "clean", name: "Cleaning Quote Calculator", type: "Home Services", updatedAt: "2 hours ago", status: "Published", usesCount: 1240 },
-      { id: "roi", name: "SaaS ROI Calculator", type: "Finance & B2B", updatedAt: "Yesterday", status: "Published", usesCount: 8520 },
-      { id: "budget", name: "Personal Budget Calculator", type: "Personal Finance", updatedAt: "3 days ago", status: "Draft", usesCount: 0 },
-      { id: "mortgage", name: "Mortgage Refinance Estimator", type: "Real Estate", updatedAt: "5 days ago", status: "Published", usesCount: 4100 },
-    ];
+    const drafts: any[] = JSON.parse(localStorage.getItem('bgrowth.calculator.drafts') ?? '[]');
+    const published = drafts.filter((d: any) => d.publishSettings?.status === 'public').length;
+    const totalUses = drafts.reduce((s: number, d: any) => s + (d.uses ?? 0), 0);
+
+    const listItems = drafts.slice(0, 4).map((d: any) => ({
+      id: d.id,
+      name: d.details?.name || 'Untitled',
+      type: d.details?.industry || 'General',
+      updatedAt: d.updatedAt ? new Date(d.updatedAt).toLocaleDateString() : 'Recently',
+      status: d.publishSettings?.status === 'public' ? 'Published' : 'Draft',
+      usesCount: d.uses ?? 0,
+    }));
 
     const statistics = [
-      { label: "Active Calculators", value: "32", desc: "Published across domains" },
-      { label: "Total Completed Uses", value: "12.4K", desc: "+14% growth this month" },
-      { label: "Average Form CTR", value: "68.2%", desc: "High-intent lead conversion" },
-      { label: "API Webhook Pings", value: "100%", desc: "Downtime is perfectly stable" },
+      { label: "My Calculators", value: String(drafts.length), desc: "Created in BGrowth Studio" },
+      { label: "Published", value: String(published), desc: "Live and accessible" },
+      { label: "Total Uses", value: String(totalUses), desc: "Across all calculators" },
+      { label: "Templates", value: "24", desc: "Ready to use" },
     ];
 
     return (

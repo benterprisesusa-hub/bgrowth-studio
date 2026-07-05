@@ -34,9 +34,10 @@ const DEFAULT_CONFIG: CalculatorConfig = {
 interface CalculatorBuilderProps {
   onBack: () => void;
   initialConfig?: CalculatorConfig;
+  ownerEmail?: string;
 }
 
-export function CalculatorBuilder({ onBack, initialConfig }: CalculatorBuilderProps) {
+export function CalculatorBuilder({ onBack, initialConfig, ownerEmail = 'benterprisesusa@gmail.com' }: CalculatorBuilderProps) {
   const [config, setConfig] = useState<CalculatorConfig>(initialConfig ?? DEFAULT_CONFIG);
   const [activeStep, setActiveStep] = useState(1);
   const [currentTab, setCurrentTab] = useState('workspace');
@@ -103,6 +104,7 @@ export function CalculatorBuilder({ onBack, initialConfig }: CalculatorBuilderPr
             config={config}
             activeStep={activeStep}
             currentTab={currentTab}
+            ownerEmail={ownerEmail}
             onPreview={() => {}}
             onSave={handleSave}
             onPublish={handlePublish}

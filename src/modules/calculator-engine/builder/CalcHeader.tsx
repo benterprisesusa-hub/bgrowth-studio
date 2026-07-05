@@ -18,6 +18,7 @@ interface HeaderProps {
   config: CalculatorConfig;
   activeStep: number;
   currentTab: string;
+  ownerEmail?: string;
   onPreview: () => void;
   onSave: () => void;
   onPublish: () => void;
@@ -30,6 +31,7 @@ export default function Header({
   config,
   activeStep,
   currentTab,
+  ownerEmail = 'benterprisesusa@gmail.com',
   onPreview,
   onSave,
   onPublish,
@@ -127,11 +129,11 @@ export default function Header({
               className="h-8 w-8 rounded-full border border-slate-200 object-cover"
             />
             <div className="hidden lg:block text-left">
-              <span className="text-xs font-semibold text-slate-900 block leading-tight">
-                Olivia Vance
+              <span className="text-xs font-semibold text-slate-900 block leading-tight truncate max-w-[120px]">
+                {ownerEmail.split('@')[0]}
               </span>
               <span className="text-[10px] text-slate-500 block">
-                Lead Architect
+                BGrowth Studio
               </span>
             </div>
           </div>
