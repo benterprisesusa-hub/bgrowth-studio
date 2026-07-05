@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Save, Printer, Download, History, Plus, StickyNote, Calculator, TrendingUp, DollarSign, Clock, BarChart2, Star, Trash2, ChevronRight } from 'lucide-react';
+import { ALL_CALCULATORS } from './allCalculators';
 import { CalcField } from './components/CalcField';
 import { ResultsPanel } from './components/ResultsPanel';
 import { DonutChart } from './components/DonutChart';
@@ -269,7 +270,7 @@ interface CalculatorEngineProps {
 
 export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEngineProps) {
   const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(
-    () => initialCalcId ? CALCULATORS.find(c => c.productId === initialCalcId) ?? null : null
+    () => initialCalcId ? ALL_CALCULATORS.find(c => c.productId === initialCalcId) ?? null : null
   );
   const [showBuilder, setShowBuilder] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
