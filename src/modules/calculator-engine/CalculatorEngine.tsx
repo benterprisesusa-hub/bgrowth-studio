@@ -11,6 +11,17 @@ import { Toast } from '../../components/Toast';
 import { cleaningPricingCalc } from './configs/cleaningPricing';
 import { mileageDeductionCalc } from './configs/mileageDeduction';
 import { roiCalc } from './configs/roi';
+import { notaryFeeCalc } from './configs/notaryFee';
+import { pressureWashingCalc } from './configs/pressureWashing';
+import { lawnCareCalc } from './configs/lawnCare';
+import { taxEstimatorCalc } from './configs/taxEstimator';
+import { hourlyRateCalc } from './configs/hourlyRate';
+import { startupCostCalc } from './configs/startupCost';
+import { breakEvenCalc } from './configs/breakEven';
+import { mortgageCalc } from './configs/mortgage';
+import { commissionCalc } from './configs/commission';
+import { businessProfitCalc } from './configs/businessProfit';
+import { loanProfitCalc } from './configs/loanProfit';
 import type { CalculatorConfig, CalculatorValues } from './types';
 import { cn } from '../../lib/utils';
 
@@ -21,6 +32,17 @@ const CALCULATORS: CalculatorConfig[] = [
   cleaningPricingCalc,
   mileageDeductionCalc,
   roiCalc,
+  notaryFeeCalc,
+  pressureWashingCalc,
+  lawnCareCalc,
+  taxEstimatorCalc,
+  hourlyRateCalc,
+  startupCostCalc,
+  breakEvenCalc,
+  mortgageCalc,
+  commissionCalc,
+  businessProfitCalc,
+  loanProfitCalc,
 ];
 
 const STORAGE_KEY = 'bgrowth.studio.calculator.values';
@@ -246,6 +268,15 @@ interface CalculatorEngineProps {
 export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
   const [activeCalc, setActiveCalc] = useState<CalculatorConfig | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopyLink = (productId: string) => {
+    const url = `${window.location.origin}/?calc=${productId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(productId);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
 
   if (showBuilder) {
     return <CalculatorBuilder onBack={() => setShowBuilder(false)} />;
@@ -341,6 +372,17 @@ export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
                   </button>
                   <button
                     type="button"
+                    onClick={() => handleCopyLink(calc.productId)}
+                    title="Copy public link"
+                    className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-brand hover:text-brand"
+                  >
+                    {copiedId === calc.productId
+                      ? <span className="text-[9px] font-bold text-emerald-500">✓</span>
+                      : <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                    }
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => setActiveCalc(calc)}
                     title="Edit calculator"
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-brand hover:text-brand"
@@ -351,7 +393,7 @@ export function CalculatorEngine({ ownerEmail: _ }: CalculatorEngineProps) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => { if (confirm(`Delete "${calc.name}"?`)) alert('Delete coming soon — calculators are currently built-in configs.'); }}
+                    onClick={() => { if (confirm(`Delete "${calc.name}"?`)) alert('Built-in calculators cannot be deleted.'); }}
                     title="Delete calculator"
                     className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-red-200 hover:text-red-500"
                   >
