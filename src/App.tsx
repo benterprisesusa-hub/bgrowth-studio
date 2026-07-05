@@ -168,6 +168,7 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
   const params = new URLSearchParams(window.location.search);
   const templateId = params.get('template');
   const calcId = params.get('calc');
+  const plannerId = params.get('planner');
 
   const [activeTool, setActiveTool] = useState<ActiveTool>(() => {
     const tool = params.get('tool');
@@ -183,8 +184,8 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
   }, [activeTool]);
 
   useEffect(() => {
-    if (!activeTool && !templateId && !calcId) applyBrandTheme('#1061EC');
-  }, [activeTool, templateId, calcId]);
+    if (!activeTool && !templateId && !calcId && !plannerId) applyBrandTheme('#1061EC');
+  }, [activeTool, templateId, calcId, plannerId]);
 
   useEffect(() => {
     document.title = activeTool ? `${TOOL_NAMES[activeTool]} | BGrowth Studio` : 'BGrowth Studio';
@@ -193,6 +194,12 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
   if (templateId) return <PublicFill templateId={templateId} />;
 
   if (calcId) return <PublicCalcFill calcId={calcId} />;
+
+  if (plannerId) return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans">
+      <PlannerEngine ownerEmail="" initialPlannerId={plannerId} />
+    </div>
+  );
 
   if (activeTool) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans bg-[#f4f6fb]">
