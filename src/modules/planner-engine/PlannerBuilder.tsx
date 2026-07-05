@@ -519,6 +519,114 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
                     }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add habit</button>
                   </div>
                 )}
+
+                {/* Resources */}
+                {selectedBlock.config.type === 'resources' && (
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Pre-configured Resources</label>
+                    {(selectedBlock.config as any).resources.map((res: any, idx: number) => (
+                      <div key={res.id} className="mb-2 rounded-lg border border-navy-100 bg-navy-50 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Input value={res.label} placeholder="Label"
+                            onChange={e => {
+                              const resources = [...(selectedBlock.config as any).resources];
+                              resources[idx] = { ...res, label: e.target.value };
+                              updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
+                            }} />
+                          <button type="button" onClick={() => {
+                            const resources = (selectedBlock.config as any).resources.filter((_: any, i: number) => i !== idx);
+                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
+                          }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                        </div>
+                        <Input value={res.url ?? ''} placeholder="https://..."
+                          onChange={e => {
+                            const resources = [...(selectedBlock.config as any).resources];
+                            resources[idx] = { ...res, url: e.target.value };
+                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
+                          }} />
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => {
+                      const resources = [...(selectedBlock.config as any).resources, { id: newId(), label: 'New Resource', url: '' }];
+                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
+                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add resource</button>
+                  </div>
+                )}
+
+                {/* Worksheet questions */}
+                {selectedBlock.config.type === 'worksheet' && (
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Questions</label>
+                    {(selectedBlock.config as any).questions.map((q: any, idx: number) => (
+                      <div key={q.id} className="flex items-center gap-1.5 mb-1">
+                        <Input value={q.question} placeholder="Question..."
+                          onChange={e => {
+                            const questions = [...(selectedBlock.config as any).questions];
+                            questions[idx] = { ...q, question: e.target.value };
+                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, questions } as any });
+                          }} />
+                        <button type="button" onClick={() => {
+                          const questions = (selectedBlock.config as any).questions.filter((_: any, i: number) => i !== idx);
+                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, questions } as any });
+                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => {
+                      const questions = [...(selectedBlock.config as any).questions, { id: newId(), question: 'New Question', type: 'textarea', placeholder: '' }];
+                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, questions } as any });
+                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add question</button>
+                  </div>
+                )}
+
+                {/* Milestones */}
+                {selectedBlock.config.type === 'milestones' && (
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Milestones</label>
+                    {(selectedBlock.config as any).milestones.map((m: any, idx: number) => (
+                      <div key={m.id} className="flex items-center gap-1.5 mb-1">
+                        <Input value={m.label} placeholder="Milestone..."
+                          onChange={e => {
+                            const milestones = [...(selectedBlock.config as any).milestones];
+                            milestones[idx] = { ...m, label: e.target.value };
+                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, milestones } as any });
+                          }} />
+                        <button type="button" onClick={() => {
+                          const milestones = (selectedBlock.config as any).milestones.filter((_: any, i: number) => i !== idx);
+                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, milestones } as any });
+                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => {
+                      const milestones = [...(selectedBlock.config as any).milestones, { id: newId(), label: 'New Milestone', placeholder: '' }];
+                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, milestones } as any });
+                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add milestone</button>
+                  </div>
+                )}
+
+                {/* Timeline */}
+                {selectedBlock.config.type === 'timeline' && (
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Events</label>
+                    {(selectedBlock.config as any).events.map((ev: any, idx: number) => (
+                      <div key={ev.id} className="flex items-center gap-1.5 mb-1">
+                        <Input value={ev.label} placeholder="Event..."
+                          onChange={e => {
+                            const events = [...(selectedBlock.config as any).events];
+                            events[idx] = { ...ev, label: e.target.value };
+                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, events } as any });
+                          }} />
+                        <button type="button" onClick={() => {
+                          const events = (selectedBlock.config as any).events.filter((_: any, i: number) => i !== idx);
+                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, events } as any });
+                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => {
+                      const events = [...(selectedBlock.config as any).events, { id: newId(), label: 'New Event', placeholder: '' }];
+                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, events } as any });
+                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add event</button>
+                  </div>
+                )}
               </div>
             </div>
           )}
