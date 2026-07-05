@@ -1615,7 +1615,13 @@ export default function WorkspaceSteps({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {listItems.map((item) => (
+                {listItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-sm text-slate-400">
+                      No calculators yet. Create your first one using the builder!
+                    </td>
+                  </tr>
+                ) : listItems.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-[#0D1B4C]">{item.name}</td>
                     <td className="py-3.5 px-4 text-slate-500">{item.type}</td>
