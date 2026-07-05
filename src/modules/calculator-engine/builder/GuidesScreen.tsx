@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   HelpCircle,
   BookOpen,
@@ -28,7 +28,7 @@ export default function GuidesScreen() {
 
   const codeSnippets: Record<string, string> = {
     html: `<!-- Standard dynamic iframe embed widget -->\n<iframe \n  src="https://calculator.bgrowth.com/embed/saas-project-roi" \n  width="100%" \n  height="700" \n  style="border:none; border-radius:16px; box-shadow:0 10px 40px rgba(0,0,0,0.04);"\n  allow="geolocation"\n></iframe>`,
-    react: `// Standard React integration wrapper component\nimport React from "react";\n\nexport default function BGrowthCalculatorWidget() {\n  return (\n    <div className="calculator-widget-container max-w-4xl mx-auto p-4">\n      <iframe \n        src="https://calculator.bgrowth.com/embed/saas-project-roi" \n        width="100%" \n        height="700" \n        title="SaaS ROI Estimator"\n        style={{ border: "none", borderRadius: "16px" }}\n      />\n    </div>\n  );\n}`,
+    react: `// Standard React integration wrapper component\n\n\nexport default function BGrowthCalculatorWidget() {\n  return (\n    <div className="calculator-widget-container max-w-4xl mx-auto p-4">\n      <iframe \n        src="https://calculator.bgrowth.com/embed/saas-project-roi" \n        width="100%" \n        height="700" \n        title="SaaS ROI Estimator"\n        style={{ border: "none", borderRadius: "16px" }}\n      />\n    </div>\n  );\n}`,
     vue: `<!-- Vue 3 Integration Component -->\n<template>\n  <div class="calculator-container">\n    <iframe \n      src="https://calculator.bgrowth.com/embed/saas-project-roi" \n      width="100%" \n      height="700" \n      style="border:none; border-radius:16px;"\n    />\n  </div>\n</template>\n\n<script setup>\n// Ready to render within standard vue-router layouts\n</script>`,
     api: `// Programmatic JSON calculation API proxy\nconst fetchCalculatorQuote = async (inputs) => {\n  const res = await fetch("https://api.bgrowth.com/v1/calculators/eval", {\n    method: "POST",\n    headers: { "Content-Type": "application/json" },\n    body: JSON.stringify({\n      calculatorId: "saas-project-roi",\n      variables: {\n        licensingCost: 25000,\n        setupCost: 10000,\n        revenueIncrease: 85000,\n      }\n    })\n  });\n  const results = await res.json();\n  return results.calculations;\n};`,
   };
