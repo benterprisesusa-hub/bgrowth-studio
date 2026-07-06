@@ -284,5 +284,17 @@ export function loadPlanners(): PlannerConfig[] {
 }
 
 export function savePlanners(planners: PlannerConfig[]): void {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(planners)); } catch { /* */ }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(planners));
+  } catch (e) {
+    // If storage quota exceeded, save without cover images
+    try {
+      const stripped = planners.map(p => ({
+        ...p,
+        settings: { ...p.settings, coverImage: null }
+      }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stripped));
+      console.warn('Cover images stripped due to storage limits');
+    } catch { /* ignore */ }
+  }
 }
