@@ -15,7 +15,8 @@ export type BlockType =
   | 'milestones'
   | 'timeline'
   | 'image'
-  | 'resources';
+  | 'resources'
+  | 'form_fields';
 
 // -----------------------------------------------------------------------
 // Block configs (how each block is configured in the builder)
@@ -84,6 +85,18 @@ export interface ResourcesBlockConfig {
   allowAddItems: boolean;
 }
 
+export interface FormFieldsBlockConfig {
+  type: 'form_fields';
+  fields: {
+    id: string;
+    label: string;
+    type: 'text' | 'number' | 'email' | 'phone' | 'date' | 'textarea' | 'select';
+    placeholder?: string;
+    required: boolean;
+    options?: string[]; // for select type
+  }[];
+}
+
 export type BlockConfig =
   | CalendarBlockConfig
   | ChecklistBlockConfig
@@ -94,7 +107,8 @@ export type BlockConfig =
   | MilestonesBlockConfig
   | TimelineBlockConfig
   | ImageBlockConfig
-  | ResourcesBlockConfig;
+  | ResourcesBlockConfig
+  | FormFieldsBlockConfig;
 
 // -----------------------------------------------------------------------
 // Planner block (a section in the planner)
@@ -176,6 +190,7 @@ export const BLOCK_TYPE_INFO: Record<BlockType, { label: string; icon: string; d
   timeline: { label: 'Timeline', icon: '⏰', description: 'Visual timeline of events', color: '#475569' },
   image: { label: 'Image', icon: '📷', description: 'Vision board or inspiration', color: '#E11D48' },
   resources: { label: 'Resources', icon: '📎', description: 'Links and references', color: '#CA8A04' },
+  form_fields: { label: 'Form Fields', icon: '📋', description: 'Custom form with various field types', color: '#1061EC' },
 };
 
 export const PLANNER_CATEGORIES: PlannerCategory[] = [
@@ -230,8 +245,12 @@ export function defaultBlock(type: BlockType): PlannerBlock {
     worksheet: { type: 'worksheet', questions: [{ id: newId(), question: 'Question 1', type: 'textarea', placeholder: 'Your answer...' }] },
     milestones: { type: 'milestones', milestones: [{ id: newId(), label: 'Milestone 1', placeholder: 'Describe this milestone...' }], showDate: true, showStatus: true },
     timeline: { type: 'timeline', events: [{ id: newId(), label: 'Event 1', placeholder: 'Describe this event...' }], orientation: 'vertical' },
-    image: { type: 'image', prompt: 'Upload your vision board or inspiration image', allowUpload: true, caption: '' },
+    image: { type: 'image', prompt: 'Upload your vision board or inspiration image', allowUpload: true, caption: '', preImage: null, preCaption: '' },
     resources: { type: 'resources', resources: [{ id: newId(), label: 'Resource 1', url: '' }], allowAddItems: true },
+    form_fields: { type: 'form_fields', fields: [
+      { id: newId(), label: 'Full Name', type: 'text', placeholder: 'Enter your name', required: true },
+      { id: newId(), label: 'Email', type: 'email', placeholder: 'your@email.com', required: true },
+    ]},
   };
 
   return {

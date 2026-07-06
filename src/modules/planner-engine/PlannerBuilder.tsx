@@ -627,6 +627,89 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
                     }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add event</button>
                   </div>
                 )}
+
+                {/* Image pre-config */}
+                {selectedBlock.config.type === 'image' && (
+                  <div className="flex flex-col gap-2">
+                    <div>
+                      <label className="mb-1 block text-[10px] font-semibold text-navy-600">Pre-configured Image</label>
+                      {(selectedBlock.config as any).preImage ? (
+                        <div className="relative">
+                          <img src={(selectedBlock.config as any).preImage} alt="" className="w-full h-24 object-cover rounded-lg" />
+                          <button type="button" onClick={() => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, preImage: null } as any })}
+                            className="absolute right-1 top-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] text-white">✕</button>
+                        </div>
+                      ) : (
+                        <label className="flex h-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100">
+                          <span className="text-xs text-navy-400">📷 Upload image</span>
+                          <input type="file" accept="image/*" className="hidden"
+                            onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = ev => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, preImage: ev.target?.result } as any });
+                              reader.readAsDataURL(file);
+                            }} />
+                        </label>
+                      )}
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[10px] font-semibold text-navy-600">Pre-configured Caption</label>
+                      <Input value={(selectedBlock.config as any).preCaption ?? ''} placeholder="Image caption..."
+                        onChange={e => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, preCaption: e.target.value } as any })} />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[10px] font-semibold text-navy-600">Upload Prompt for User</label>
+                      <Input value={(selectedBlock.config as any).prompt ?? ''} placeholder="Upload your inspiration..."
+                        onChange={e => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, prompt: e.target.value } as any })} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Form Fields */}
+                {selectedBlock.config.type === 'form_fields' && (
+                  <div>
+                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Form Fields</label>
+                    {(selectedBlock.config as any).fields.map((field: any, idx: number) => (
+                      <div key={field.id} className="mb-2 rounded-lg border border-navy-100 bg-navy-50 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Input value={field.label} placeholder="Field label"
+                            onChange={e => {
+                              const fields = [...(selectedBlock.config as any).fields];
+                              fields[idx] = { ...field, label: e.target.value };
+                              updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
+                            }} />
+                          <button type="button" onClick={() => {
+                            const fields = (selectedBlock.config as any).fields.filter((_: any, i: number) => i !== idx);
+                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
+                          }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                        </div>
+                        <select value={field.type}
+                          onChange={e => {
+                            const fields = [...(selectedBlock.config as any).fields];
+                            fields[idx] = { ...field, type: e.target.value };
+                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
+                          }}
+                          className="w-full rounded border border-navy-100 bg-white px-2 py-1 text-xs text-navy-700 focus:outline-none mb-1">
+                          {['text','number','email','phone','date','textarea','select'].map(t => <option key={t}>{t}</option>)}
+                        </select>
+                        <label className="flex items-center gap-1 text-[10px] text-navy-500 cursor-pointer">
+                          <input type="checkbox" checked={field.required}
+                            onChange={e => {
+                              const fields = [...(selectedBlock.config as any).fields];
+                              fields[idx] = { ...field, required: e.target.checked };
+                              updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
+                            }} className="accent-brand" />
+                          Required
+                        </label>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => {
+                      const fields = [...(selectedBlock.config as any).fields, { id: newId(), label: 'New Field', type: 'text', placeholder: '', required: false }];
+                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
+                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add field</button>
+                  </div>
+                )}
               </div>
             </div>
           )}
