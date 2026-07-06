@@ -1,0 +1,259 @@
+import { useState } from 'react';
+import {
+  DndContext, closestCenter, PointerSensor, useSensor, useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import { SortableContext, arrayMove, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical, Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Input } from '../../components/ui/Input';
+import { Textarea } from '../../components/ui/Textarea';
+import { Select } from '../../components/ui/Select';
+import { newId } from './types';
+import { cn } from '../../lib/utils';
+
+export type FormFieldType = 'text' | 'email' | 'phone' | 'number' | 'date' | 'time' | 'textarea' | 'select' | 'checkbox';
+
+export const FIELD_TYPE_LABELS: Record<FormFieldType, string> = {
+  text: 'Text',
+  email: 'Email',
+  phone: 'Phone',
+  number: 'Number',
+  date: 'Date',
+  time: 'Time',
+  textarea: 'Long Text',
+  select: 'Dropdown',
+  checkbox: 'Checkbox',
+};
+
+export interface PlannerFormField {
+  id: string;
+  label: string;
+  type: FormFieldType;
+  placeholder?: string;
+  required: boolean;
+  options?: string[]; // for select
+  icon?: string;
+}
+
+export interface FormFieldsConfig {
+  type: 'form_fields';
+  sectionTitle: string;
+  description: string;
+  icon: string;
+  whyItMatters?: string;
+  tip?: string;
+  optional: boolean;
+  fields: PlannerFormField[];
+}
+
+function defaultField(): PlannerFormField {
+  return { id: newId(), label: '', type: 'text', required: false, placeholder: '' };
+}
+
+// -----------------------------------------------------------------------
+// Sortable Field Row
+// -----------------------------------------------------------------------
+function SortableFieldRow({ field, onChange, onDelete }: {
+  field: PlannerFormField;
+  onChange: (f: PlannerFormField) => void;
+  onDelete: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: field.id });
+
+  return (
+    <div ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={cn('rounded-xl border border-navy-100 bg-white p-3 shadow-card', isDragging && 'opacity-50 shadow-cardHover')}>
+      <div className="flex flex-col gap-2.5">
+        {/* Row 1: label + type + required + delete */}
+        <div className="flex items-end gap-2">
+          <button type="button" className="cursor-grab pb-2 text-navy-300 hover:text-navy-500 active:cursor-grabbing"
+            {...attributes} {...listeners}>
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <div className="flex-1">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Field Label</label>
+            <Input value={field.label} placeholder="e.g. Client Name" onChange={e => onChange({ ...field, label: e.target.value })} />
+          </div>
+          <div className="w-28">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Type</label>
+            <Select value={field.type} onChange={e => onChange({ ...field, type: e.target.value as FormFieldType })}>
+              {(Object.entries(FIELD_TYPE_LABELS) as [FormFieldType, string][]).map(([val, label]) => (
+                <option key={val} value={val}>{label}</option>
+              ))}
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 pb-1">
+            <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-navy-600 whitespace-nowrap">
+              <input type="checkbox" checked={!!field.required}
+                onChange={e => onChange({ ...field, required: e.target.checked })}
+                className="h-3.5 w-3.5 rounded accent-brand" />
+              Required
+            </label>
+            <button type="button" onClick={onDelete}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-navy-300 hover:bg-red-50 hover:text-red-500">
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2: placeholder */}
+        <div className="pl-6">
+          <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Placeholder (optional)</label>
+          <Input value={field.placeholder ?? ''} placeholder="e.g. John Smith"
+            onChange={e => onChange({ ...field, placeholder: e.target.value })} />
+        </div>
+
+        {/* Row 3: select options */}
+        {field.type === 'select' && (
+          <div className="pl-6">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Options (one per line)</label>
+            <textarea rows={3}
+              className="w-full resize-y rounded-lg border border-navy-100 bg-white px-3 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none"
+              placeholder="Option A&#10;Option B&#10;Option C"
+              value={(field.options ?? []).join('\n')}
+              onChange={e => onChange({ ...field, options: e.target.value.split('\n').map(s => s.trim()).filter(Boolean) })} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// -----------------------------------------------------------------------
+// Main Form Fields Block Editor
+// -----------------------------------------------------------------------
+interface FormFieldsBlockEditorProps {
+  config: FormFieldsConfig;
+  onChange: (config: FormFieldsConfig) => void;
+}
+
+const SECTION_ICONS = ['📋', '👤', '📅', '📞', '📧', '🏠', '💼', '📝', '🔒', '💳', '📍', '⏰', '🎯', '📊', '✅', '📄'];
+
+export function FormFieldsBlockEditor({ config, onChange }: FormFieldsBlockEditorProps) {
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const set = <K extends keyof FormFieldsConfig>(key: K, val: FormFieldsConfig[K]) =>
+    onChange({ ...config, [key]: val });
+
+  const addField = () => onChange({ ...config, fields: [...config.fields, defaultField()] });
+
+  const updateField = (idx: number, f: PlannerFormField) => {
+    const fields = [...config.fields];
+    fields[idx] = f;
+    onChange({ ...config, fields });
+  };
+
+  const deleteField = (idx: number) => {
+    onChange({ ...config, fields: config.fields.filter((_, i) => i !== idx) });
+  };
+
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = config.fields.findIndex(f => f.id === active.id);
+    const to = config.fields.findIndex(f => f.id === over.id);
+    onChange({ ...config, fields: arrayMove(config.fields, from, to) });
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Section title & icon */}
+      <div>
+        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Section Title *</label>
+        <Input value={config.sectionTitle} placeholder="e.g. Client Information"
+          onChange={e => set('sectionTitle', e.target.value)} />
+      </div>
+
+      {/* Section type label */}
+      <div className="rounded-lg border border-navy-100 bg-navy-50 px-3 py-2 text-xs text-navy-500">
+        <span className="font-semibold">Section Type:</span> Form Fields — Text
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Short Description</label>
+        <Input value={config.description} placeholder="e.g. Basic contact details for this appointment."
+          onChange={e => set('description', e.target.value)} />
+      </div>
+
+      {/* Icon picker */}
+      <div>
+        <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Section Icon</label>
+        <div className="grid grid-cols-8 gap-1">
+          {SECTION_ICONS.map(icon => (
+            <button key={icon} type="button" onClick={() => set('icon', icon)}
+              className={cn('flex h-8 w-8 items-center justify-center rounded-lg text-base transition-colors',
+                config.icon === icon ? 'bg-brand text-white' : 'bg-navy-50 hover:bg-navy-100')}>
+              {icon}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Advanced toggle */}
+      <button type="button" onClick={() => setShowAdvanced(v => !v)}
+        className="flex items-center gap-1.5 text-xs font-medium text-navy-500 hover:text-navy-800">
+        {showAdvanced ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        Advanced options
+      </button>
+
+      {showAdvanced && (
+        <div className="flex flex-col gap-3 rounded-xl border border-navy-100 bg-navy-50 p-3">
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Why It Matters (optional)</label>
+            <Textarea rows={2} value={config.whyItMatters ?? ''} placeholder="Explains to the user why this section is important."
+              onChange={e => set('whyItMatters', e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Tip (optional)</label>
+            <Textarea rows={2} value={config.tip ?? ''} placeholder="A practical tip shown at the bottom of the section."
+              onChange={e => set('tip', e.target.value)} />
+          </div>
+          <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-navy-700">
+            <input type="checkbox" checked={config.optional}
+              onChange={e => set('optional', e.target.checked)}
+              className="h-3.5 w-3.5 rounded accent-brand" />
+            Mark this section as optional (doesn't count toward progress)
+          </label>
+        </div>
+      )}
+
+      {/* Fields */}
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <label className="text-[10px] font-bold uppercase tracking-wide text-navy-400">
+            Fields ({config.fields.length})
+          </label>
+          <button type="button" onClick={addField}
+            className="flex items-center gap-1 rounded-lg bg-brand px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-600">
+            <Plus className="h-3 w-3" /> Add field
+          </button>
+        </div>
+
+        {config.fields.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-navy-200 py-6 text-center">
+            <p className="text-xs text-navy-400">No fields yet — click "Add field" to start.</p>
+          </div>
+        ) : (
+          <DndContext sensors={sensors} collisionDetection={closestCenter}
+            modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
+            <SortableContext items={config.fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-2">
+                {config.fields.map((field, idx) => (
+                  <SortableFieldRow key={field.id} field={field}
+                    onChange={f => updateField(idx, f)}
+                    onDelete={() => deleteField(idx)} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </div>
+    </div>
+  );
+}

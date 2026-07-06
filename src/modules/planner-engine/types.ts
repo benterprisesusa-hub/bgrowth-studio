@@ -247,7 +247,7 @@ export function defaultBlock(type: BlockType): PlannerBlock {
     timeline: { type: 'timeline', events: [{ id: newId(), label: 'Event 1', placeholder: 'Describe this event...' }], orientation: 'vertical' },
     image: { type: 'image', prompt: 'Upload your vision board or inspiration image', allowUpload: true, caption: '', preImage: null, preCaption: '' },
     resources: { type: 'resources', resources: [{ id: newId(), label: 'Resource 1', url: '' }], allowAddItems: true },
-    form_fields: { type: 'form_fields', fields: [
+    form_fields: { type: 'form_fields', sectionTitle: 'Section 1', description: '', icon: '📋', whyItMatters: '', tip: '', optional: false, fields: [
       { id: newId(), label: 'Full Name', type: 'text', placeholder: 'Enter your name', required: true },
       { id: newId(), label: 'Email', type: 'email', placeholder: 'your@email.com', required: true },
     ]},

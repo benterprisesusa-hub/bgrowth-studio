@@ -13,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Select } from '../../components/ui/Select';
+import { FormFieldsBlockEditor, type FormFieldsConfig } from './FormFieldsBlockEditor';
 import {
   type PlannerConfig, type PlannerBlock, type BlockType,
   BLOCK_TYPE_INFO, THEME_COLORS, PLANNER_CATEGORIES,
@@ -678,49 +679,12 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
                   </div>
                 )}
 
-                {/* Form Fields */}
+                {/* Form Fields — full editor */}
                 {selectedBlock.config.type === 'form_fields' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Form Fields</label>
-                    {(selectedBlock.config as any).fields.map((field: any, idx: number) => (
-                      <div key={field.id} className="mb-2 rounded-lg border border-navy-100 bg-navy-50 p-2">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Input value={field.label} placeholder="Field label"
-                            onChange={e => {
-                              const fields = [...(selectedBlock.config as any).fields];
-                              fields[idx] = { ...field, label: e.target.value };
-                              updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
-                            }} />
-                          <button type="button" onClick={() => {
-                            const fields = (selectedBlock.config as any).fields.filter((_: any, i: number) => i !== idx);
-                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
-                          }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                        </div>
-                        <select value={field.type}
-                          onChange={e => {
-                            const fields = [...(selectedBlock.config as any).fields];
-                            fields[idx] = { ...field, type: e.target.value };
-                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
-                          }}
-                          className="w-full rounded border border-navy-100 bg-white px-2 py-1 text-xs text-navy-700 focus:outline-none mb-1">
-                          {['text','number','email','phone','date','textarea','select'].map(t => <option key={t}>{t}</option>)}
-                        </select>
-                        <label className="flex items-center gap-1 text-[10px] text-navy-500 cursor-pointer">
-                          <input type="checkbox" checked={field.required}
-                            onChange={e => {
-                              const fields = [...(selectedBlock.config as any).fields];
-                              fields[idx] = { ...field, required: e.target.checked };
-                              updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
-                            }} className="accent-brand" />
-                          Required
-                        </label>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const fields = [...(selectedBlock.config as any).fields, { id: newId(), label: 'New Field', type: 'text', placeholder: '', required: false }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, fields } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add field</button>
-                  </div>
+                  <FormFieldsBlockEditor
+                    config={selectedBlock.config as unknown as FormFieldsConfig}
+                    onChange={cfg => updateBlock(selectedBlock.id, { config: cfg as any })}
+                  />
                 )}
               </div>
             </div>
