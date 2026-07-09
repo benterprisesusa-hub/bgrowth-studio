@@ -30,10 +30,10 @@ export default function AnalyticsView({ products }: AnalyticsViewProps) {
       {/* Analytics Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
-          { label: "Active Traffic Views", count: totalViews.toLocaleString(), trend: totalViews > 0 ? "+12%" : "0%", color: "text-blue-600 bg-blue-50 border-blue-100/50", icon: Users },
-          { label: "Checkouts initiated", count: totalCheckouts.toLocaleString(), trend: totalCheckouts > 0 ? "+8.4%" : "0%", color: "text-indigo-600 bg-indigo-50 border-indigo-100/50", icon: ShoppingBag },
+          { label: "Active Traffic Views", count: totalViews?.toLocaleString() ?? "0", trend: totalViews > 0 ? "+12%" : "0%", color: "text-blue-600 bg-blue-50 border-blue-100/50", icon: Users },
+          { label: "Checkouts initiated", count: totalCheckouts?.toLocaleString() ?? "0", trend: totalCheckouts > 0 ? "+8.4%" : "0%", color: "text-indigo-600 bg-indigo-50 border-indigo-100/50", icon: ShoppingBag },
           { label: "White-Label Revenue", count: `$${totalRevenue.toFixed(2)}`, trend: totalRevenue > 0 ? "+14.2%" : "0%", color: "text-emerald-600 bg-emerald-50 border-emerald-100/50", icon: DollarSign },
-          { label: "AI Credits Consumed", count: totalCredits.toLocaleString(), trend: totalCredits > 0 ? "Normal limits" : "0", color: "text-amber-600 bg-amber-50 border-amber-100/50", icon: Sparkles }
+          { label: "AI Credits Consumed", count: totalCredits?.toLocaleString() ?? "0", trend: totalCredits > 0 ? "Normal limits" : "0", color: "text-amber-600 bg-amber-50 border-amber-100/50", icon: Sparkles }
         ].map((stat, idx) => {
           const IconComp = stat.icon;
           return (
@@ -57,9 +57,9 @@ export default function AnalyticsView({ products }: AnalyticsViewProps) {
           <span className="text-xs font-bold text-slate-800 block mb-4 border-b border-slate-50 pb-2">Listing Conversion Funnel</span>
           <div className="space-y-4">
             {[
-              { stage: "1. Impression View on Storefronts", count: `${totalViews.toLocaleString()} views`, pct: totalViews > 0 ? 100 : 0, color: "bg-indigo-600" },
-              { stage: "2. Added to cart / Checkout click", count: `${totalCheckouts.toLocaleString()} actions`, pct: checkoutPct, color: "bg-indigo-500" },
-              { stage: "3. Confirmed payment & download", count: `${totalBuyers.toLocaleString()} buyers`, pct: buyerPct, color: "bg-indigo-400" }
+              { stage: "1. Impression View on Storefronts", count: `${totalViews?.toLocaleString() ?? "0"} views`, pct: totalViews > 0 ? 100 : 0, color: "bg-indigo-600" },
+              { stage: "2. Added to cart / Checkout click", count: `${totalCheckouts?.toLocaleString() ?? "0"} actions`, pct: checkoutPct, color: "bg-indigo-500" },
+              { stage: "3. Confirmed payment & download", count: `${totalBuyers?.toLocaleString() ?? "0"} buyers`, pct: buyerPct, color: "bg-indigo-400" }
             ].map((funnel, idx) => (
               <div key={idx} className="space-y-1">
                 <div className="flex justify-between text-xs font-medium text-slate-600">

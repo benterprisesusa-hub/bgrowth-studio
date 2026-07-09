@@ -1006,13 +1006,13 @@ export default function ProductDashboardView({
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
                   <span className="text-[10px] text-slate-400 block font-semibold uppercase">Gross Sales Views</span>
                   <strong className="text-2xl font-extrabold text-slate-800 mt-1 block">
-                    {(product.analytics?.views ?? 0).toLocaleString()}
+                    {(product.analytics?.views ?? 0)?.toLocaleString() ?? "0"}
                   </strong>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
                   <span className="text-[10px] text-slate-400 block font-semibold uppercase">Total Downloads</span>
                   <strong className="text-2xl font-extrabold text-indigo-600 mt-1 block">
-                    {(product.analytics?.downloads ?? 0).toLocaleString()}
+                    {(product.analytics?.downloads ?? 0)?.toLocaleString() ?? "0"}
                   </strong>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
@@ -1024,7 +1024,7 @@ export default function ProductDashboardView({
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
                   <span className="text-[10px] text-slate-400 block font-semibold uppercase">Net Earned Revenue</span>
                   <strong className="text-2xl font-extrabold text-slate-800 mt-1 block">
-                    ${(product.analytics?.revenue ?? 0).toLocaleString()}
+                    ${(product.analytics?.revenue ?? 0)?.toLocaleString() ?? "0"}
                   </strong>
                 </div>
               </div>
@@ -1059,7 +1059,7 @@ export default function ProductDashboardView({
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-extrabold text-slate-800 text-xs">Version {ver.version}</span>
-                        <span className="text-[10px] text-slate-400">{new Date(ver.timestamp).toLocaleString()}</span>
+                        <span className="text-[10px] text-slate-400">{new Date(ver.timestamp)?.toLocaleString() ?? "0"}</span>
                       </div>
                       <p className="text-[11px] text-slate-500 mt-1 font-medium italic">
                         Change log: {ver.changeLog}

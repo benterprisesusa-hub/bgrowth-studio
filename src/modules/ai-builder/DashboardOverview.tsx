@@ -76,7 +76,7 @@ export default function DashboardOverview({
         <div className="flex items-center gap-4 shrink-0 bg-slate-50/50 p-3 rounded-2xl border border-slate-50">
           <div className="text-right">
             <span className="text-[9px] text-slate-400 font-bold uppercase block">AI Credits Allotted</span>
-            <span className="text-sm font-extrabold text-slate-800 block">{credits.toLocaleString()} Credits</span>
+            <span className="text-sm font-extrabold text-slate-800 block">{credits?.toLocaleString() ?? "0"} Credits</span>
           </div>
           <button
             onClick={() => onTabChange('create')}
@@ -98,7 +98,7 @@ export default function DashboardOverview({
           </div>
           <div>
             <span className="text-[10px] text-slate-400 font-semibold block uppercase">Global Product Views</span>
-            <strong className="text-xl font-extrabold text-slate-800 mt-0.5 block">{totalViews.toLocaleString()}</strong>
+            <strong className="text-xl font-extrabold text-slate-800 mt-0.5 block">{totalViews?.toLocaleString() ?? "0"}</strong>
             <span className="text-[9px] text-emerald-500 font-bold flex items-center gap-0.5 mt-0.5">
               <span>+18.4%</span>
               <span className="text-[9px] text-slate-400 font-medium">this month</span>
@@ -113,7 +113,7 @@ export default function DashboardOverview({
           </div>
           <div>
             <span className="text-[10px] text-slate-400 font-semibold block uppercase">Total Downloads</span>
-            <strong className="text-xl font-extrabold text-slate-800 mt-0.5 block">{totalDownloads.toLocaleString()}</strong>
+            <strong className="text-xl font-extrabold text-slate-800 mt-0.5 block">{totalDownloads?.toLocaleString() ?? "0"}</strong>
             <span className="text-[9px] text-emerald-500 font-bold flex items-center gap-0.5 mt-0.5">
               <span>+12.1%</span>
               <span className="text-[9px] text-slate-400 font-medium">this week</span>
@@ -143,7 +143,7 @@ export default function DashboardOverview({
           </div>
           <div>
             <span className="text-[10px] text-slate-400 font-semibold block uppercase">Creator Revenue</span>
-            <strong className="text-xl font-extrabold text-slate-800 mt-0.5 block">${totalRevenue.toLocaleString()}</strong>
+            <strong className="text-xl font-extrabold text-slate-800 mt-0.5 block">${totalRevenue?.toLocaleString() ?? "0"}</strong>
             <span className="text-[9px] text-emerald-500 font-bold flex items-center gap-0.5 mt-0.5">
               <span>+$350.00</span>
               <span className="text-[9px] text-slate-400 font-medium">last 7 days</span>
