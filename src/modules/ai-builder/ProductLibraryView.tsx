@@ -151,7 +151,7 @@ export default function ProductLibraryView({
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {filteredProducts.map((p) => {
+          {(filteredProducts ?? []).map((p) => {
             const IconComponent = getCategoryIcon(p.structure.productType);
             
             return (
@@ -211,7 +211,7 @@ export default function ProductLibraryView({
 
                 {/* Footer Actions */}
                 <div className="border-t border-slate-50 pt-3 mt-4 flex items-center justify-between text-xs text-slate-500 font-bold">
-                  <span>Saves: {p.versions.length}</span>
+                  <span>Saves: {p.versions?.length || 1}</span>
                   
                   <div className="flex items-center gap-1.5">
                     <button

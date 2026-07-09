@@ -260,7 +260,7 @@ export default function ProductLayoutPreview({ bp, bpName, bpType, bpSellingPric
                   {bpType?.toLowerCase().includes('checklist') && (
                     <div className="space-y-4">
                       {structureData.checklistSections && Array.isArray(structureData.checklistSections) ? (
-                        structureData.checklistSections.map((section: any, sIdx: number) => (
+                        (structureData?.checklistSections ?? []).map((section: any, sIdx: number) => (
                           <div key={sIdx} className="space-y-2">
                             <span className="text-[9px] font-extrabold text-slate-400 block uppercase tracking-widest px-1">
                               {section.title || `Módulo ${sIdx + 1}`}
@@ -315,7 +315,7 @@ export default function ProductLayoutPreview({ bp, bpName, bpType, bpSellingPric
                             Daily Schedule Plan
                           </span>
                           <div className="bg-white rounded-xl border border-slate-100 p-3 shadow-sm space-y-2">
-                            {structureData.plannerDaily.map((item: string, idx: number) => {
+                            {(structureData?.plannerDaily ?? []).map((item: string, idx: number) => {
                               const key = `plan_d_${idx}`;
                               const isDone = !!completedItems[key];
                               return (
@@ -348,7 +348,7 @@ export default function ProductLayoutPreview({ bp, bpName, bpType, bpSellingPric
                             Weekly Core Focus
                           </span>
                           <div className="grid grid-cols-2 gap-2">
-                            {structureData.plannerWeekly.map((item: string, idx: number) => (
+                            {(structureData?.plannerWeekly ?? []).map((item: string, idx: number) => (
                               <div key={idx} className="bg-white p-2.5 rounded-xl border border-slate-100 shadow-sm flex flex-col justify-between">
                                 <span className="text-[10px] text-blue-600 font-black">Meta 0{idx + 1}</span>
                                 <p className="text-[9px] text-slate-600 font-medium leading-relaxed mt-1">{item}</p>
@@ -370,7 +370,7 @@ export default function ProductLayoutPreview({ bp, bpName, bpType, bpSellingPric
                         
                         <div className="space-y-3">
                           {structureData.inputs && Array.isArray(structureData.inputs) ? (
-                            structureData.inputs.map((inp: any, idx: number) => {
+                            (structureData?.inputs ?? []).map((inp: any, idx: number) => {
                               const key = inp.label || `input_${idx}`;
                               const val = calcValues[key] !== undefined ? calcValues[key] : (inp.defaultValue || 0);
                               return (
@@ -421,7 +421,7 @@ export default function ProductLayoutPreview({ bp, bpName, bpType, bpSellingPric
                           </span>
 
                           <div className="bg-white rounded-xl border border-slate-100 overflow-hidden divide-y divide-slate-100 shadow-sm">
-                            {structureData.courseModules.map((mod: any, mIdx: number) => {
+                            {(structureData?.courseModules ?? []).map((mod: any, mIdx: number) => {
                               const isActiveMod = activeCourseLesson.mIdx === mIdx;
                               return (
                                 <div key={mIdx} className="p-3 space-y-2">
@@ -489,7 +489,7 @@ export default function ProductLayoutPreview({ bp, bpName, bpType, bpSellingPric
                    !bpType?.toLowerCase().includes('course') && (
                     <div className="space-y-4">
                       {structureData.guideChapters && Array.isArray(structureData.guideChapters) ? (
-                        structureData.guideChapters.map((chap: any, cIdx: number) => (
+                        (structureData?.guideChapters ?? []).map((chap: any, cIdx: number) => (
                           <div key={cIdx} className="bg-white rounded-xl border border-slate-100 p-3 shadow-sm space-y-2">
                             <h5 className="text-[10px] font-bold text-slate-700 flex items-center gap-1.5">
                               <span className="w-4 h-4 rounded bg-purple-50/80 text-purple-700 font-bold flex items-center justify-center text-[8px]">

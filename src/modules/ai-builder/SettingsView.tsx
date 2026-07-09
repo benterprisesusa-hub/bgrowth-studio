@@ -100,7 +100,7 @@ export default function SettingsView({ creditCosts, onUpdateCreditCosts }: Setti
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {integrations.map((int, idx) => (
+          {(integrations ?? []).map((int, idx) => (
             <div key={idx} className="flex items-center justify-between p-4 bg-slate-50/30 rounded-xl border border-slate-50">
               <div>
                 <span className="font-bold text-slate-800 text-xs block">{int.name}</span>

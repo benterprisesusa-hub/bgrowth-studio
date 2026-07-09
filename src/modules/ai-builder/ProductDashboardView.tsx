@@ -233,6 +233,7 @@ export default function ProductDashboardView({
               const copy = JSON.parse(JSON.stringify(product));
               copy.structure.version = nextVer;
               copy.updatedAt = new Date().toISOString();
+              if (!copy.versions) { copy.versions = []; }
               copy.versions.push({
                 version: nextVer,
                 timestamp: new Date().toISOString(),
@@ -344,7 +345,7 @@ export default function ProductDashboardView({
                       {product.structure.longDescription}
                     </p>
                     <div className="mt-4 flex flex-wrap gap-1.5">
-                      {product.structure.tags.map((tag, idx) => (
+                      {(product.structure?.tags ?? []).map((tag, idx) => (
                         <span key={idx} className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold">
                           #{tag}
                         </span>
@@ -403,7 +404,7 @@ export default function ProductDashboardView({
                     <div>
                       <span className="text-[10px] text-indigo-600 uppercase tracking-wider font-bold">Customer Pain Points</span>
                       <ul className="list-disc pl-4 text-xs text-slate-500 space-y-1 mt-1">
-                        {product.analysis.customerPainPoints.map((p, idx) => (
+                        {(product.analysis?.customerPainPoints ?? []).map((p, idx) => (
                           <li key={idx} className="leading-relaxed">{p}</li>
                         ))}
                       </ul>
@@ -411,7 +412,7 @@ export default function ProductDashboardView({
                     <div>
                       <span className="text-[10px] text-indigo-600 uppercase tracking-wider font-bold">Selling & Monetization Opportunities</span>
                       <ul className="list-disc pl-4 text-xs text-slate-500 space-y-1 mt-1">
-                        {product.analysis.sellingOpportunities.map((o, idx) => (
+                        {(product.analysis?.sellingOpportunities ?? []).map((o, idx) => (
                           <li key={idx} className="leading-relaxed font-medium text-slate-700">{o}</li>
                         ))}
                       </ul>
@@ -425,7 +426,7 @@ export default function ProductDashboardView({
                 <div className="bg-white rounded-2xl border border-slate-100 p-6">
                   <h5 className="font-bold text-slate-800 text-xs tracking-tight mb-3">Key Features Included</h5>
                   <ul className="space-y-2">
-                    {product.structure.features.map((f, i) => (
+                    {(product.structure?.features ?? []).map((f, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-slate-600 leading-relaxed">
                         <Check className="w-3.5 h-3.5 text-indigo-600 mt-0.5" />
                         <span>{f}</span>
@@ -436,7 +437,7 @@ export default function ProductDashboardView({
                 <div className="bg-white rounded-2xl border border-slate-100 p-6">
                   <h5 className="font-bold text-slate-800 text-xs tracking-tight mb-3">Customer Realized Benefits</h5>
                   <ul className="space-y-2">
-                    {product.structure.benefits.map((b, i) => (
+                    {(product.structure?.benefits ?? []).map((b, i) => (
                       <li key={i} className="flex items-start gap-2 text-xs text-slate-600 leading-relaxed">
                         <CheckSquare className="w-3.5 h-3.5 text-emerald-600 mt-0.5" />
                         <span className="font-medium">{b}</span>
@@ -503,7 +504,7 @@ export default function ProductDashboardView({
                             <div>
                               <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 block mb-1">Subtasks</span>
                               <div className="space-y-1.5">
-                                {task.subtasks.map((sub, sidx) => (
+                                {(task?.subtasks ?? []).map((sub, sidx) => (
                                   <div key={sidx} className="flex items-center gap-1.5 text-xs text-slate-600">
                                     <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
                                     <span className="font-semibold">{sub}</span>
@@ -515,12 +516,12 @@ export default function ProductDashboardView({
                             <div>
                               <span className="text-[9px] uppercase tracking-wider font-bold text-amber-600 block mb-1">Pro Tips & Warnings</span>
                               <ul className="space-y-1.5 text-[11px] text-slate-600">
-                                {task.tips.map((tip, tidx) => (
+                                {(task?.tips ?? []).map((tip, tidx) => (
                                   <li key={tidx} className="bg-amber-50 text-amber-800 px-2.5 py-1 rounded-lg border border-amber-100/50">
                                     <strong>Tip:</strong> {tip}
                                   </li>
                                 ))}
-                                {task.warnings.map((warn, widx) => (
+                                {(task?.warnings ?? []).map((warn, widx) => (
                                   <li key={widx} className="bg-rose-50 text-rose-800 px-2.5 py-1 rounded-lg border border-rose-100/50">
                                     <strong>Warning:</strong> {warn}
                                   </li>
@@ -558,11 +559,11 @@ export default function ProductDashboardView({
                       <div className="grid grid-cols-2 gap-4 mt-4 text-[11px] text-slate-500 border-t border-slate-50 pt-4">
                         <div>
                           <strong className="text-slate-700 block mb-1">Examples Included:</strong>
-                          {sec.examples.map((ex, i) => <span key={i} className="block italic mt-0.5">• {ex}</span>)}
+                          {(sec?.examples ?? []).map((ex, i) => <span key={i} className="block italic mt-0.5">• {ex}</span>)}
                         </div>
                         <div>
                           <strong className="text-slate-700 block mb-1">Resources Link:</strong>
-                          {sec.resources.map((res, i) => <span key={i} className="block text-indigo-600 font-semibold mt-0.5">• {res}</span>)}
+                          {(sec?.resources ?? []).map((res, i) => <span key={i} className="block text-indigo-600 font-semibold mt-0.5">• {res}</span>)}
                         </div>
                       </div>
                     </div>
@@ -596,7 +597,7 @@ export default function ProductDashboardView({
                             <div className="mt-3 text-[11px] bg-indigo-50/30 p-3 rounded-lg border border-indigo-50/50">
                               <span className="font-bold text-indigo-700 block mb-1">Lesson Quiz Question:</span>
                               <p className="text-slate-700 font-medium mb-1.5">{les.quiz.question}</p>
-                              {les.quiz.options.map((opt, oidx) => (
+                              {(les.quiz?.options ?? []).map((opt, oidx) => (
                                 <div key={oidx} className="flex items-center gap-1.5 text-slate-500 mt-0.5 font-semibold">
                                   <div className="w-1 h-1 rounded-full bg-slate-400"></div>
                                   <span>{opt} {opt === les.quiz.correctAnswer && "✅ (Correct Answer)"}</span>
@@ -621,7 +622,7 @@ export default function ProductDashboardView({
                     <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
                       <span className="text-[10px] text-blue-600 font-bold uppercase block mb-3">Daily schedule theme</span>
                       <div className="space-y-2">
-                        {product.content.planner.daily.schedule.map((sch, i) => (
+                        {(product.content.planner.daily?.schedule ?? []).map((sch, i) => (
                           <div key={i} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-50 last:border-0">
                             <span className="font-bold text-indigo-600 shrink-0 w-20">{sch.time}</span>
                             <span className="text-slate-600 flex-1 ml-4 font-medium">{sch.task}</span>
@@ -635,13 +636,13 @@ export default function ProductDashboardView({
                       <div>
                         <span className="text-[10px] text-blue-600 font-bold uppercase block mb-2">Weekly goals</span>
                         <ul className="space-y-1 list-disc pl-4 text-xs text-slate-600 font-medium">
-                          {product.content.planner.weekly.goals.map((g, i) => <li key={i}>{g}</li>)}
+                          {(product.content.planner.weekly?.goals ?? []).map((g, i) => <li key={i}>{g}</li>)}
                         </ul>
                       </div>
                       <div className="border-t border-slate-50 pt-3">
                         <span className="text-[10px] text-blue-600 font-bold uppercase block mb-2">Focus Days</span>
                         <div className="grid grid-cols-3 gap-2">
-                          {product.content.planner.weekly.focusDays.map((fd, i) => (
+                          {(product.content.planner.weekly?.focusDays ?? []).map((fd, i) => (
                             <div key={i} className="p-2 bg-slate-50 rounded-lg text-center border border-slate-100">
                               <span className="font-bold text-slate-800 text-[10px] block">{fd.day}</span>
                               <span className="text-[9px] text-slate-400 block line-clamp-1 mt-0.5">{fd.theme}</span>
@@ -664,7 +665,7 @@ export default function ProductDashboardView({
                     <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
                       <span className="text-[10px] text-emerald-600 uppercase font-bold block mb-2 border-b border-slate-50 pb-2">Inputs Modifier</span>
                       
-                      {product.content.calculator.inputs.map((inp) => (
+                      {(product.content.calculator?.inputs ?? []).map((inp) => (
                         <div key={inp.key} className="flex items-center justify-between gap-4">
                           <label className="text-xs font-semibold text-slate-600">{inp.label}</label>
                           <div className="flex items-center border border-slate-100 bg-slate-50 rounded-xl px-3 py-1 text-xs focus-within:ring-2 focus-within:ring-indigo-600/10 focus-within:bg-white focus-within:border-indigo-600 transition-all shrink-0">
@@ -776,7 +777,7 @@ export default function ProductDashboardView({
                   <div className="mt-4 pt-4 border-t border-slate-50">
                     <span className="text-xs text-slate-600 font-bold block mb-1">Generated Mockups Layouts:</span>
                     <div className="grid grid-cols-3 gap-2">
-                      {product.assets.mockups.map((m, idx) => (
+                      {(product.assets?.mockups ?? []).map((m, idx) => (
                         <div key={idx} className="p-2 bg-slate-50 text-center rounded-lg border border-slate-100">
                           <span className="text-[10px] font-bold text-slate-700 capitalize block">{m.type} mockup</span>
                           <span className="text-[8px] text-slate-400 block mt-0.5">{m.label.substring(0, 16)}</span>
@@ -813,7 +814,7 @@ export default function ProductDashboardView({
 
               {/* Email campaign sequence */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {product.marketing.emailCampaign.map((email, idx) => (
+                {(product.marketing?.emailCampaign ?? []).map((email, idx) => (
                   <div key={idx} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between border-b border-slate-50 pb-2 mb-2">
@@ -1032,7 +1033,7 @@ export default function ProductDashboardView({
               <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
                 <span className="text-xs font-bold text-slate-800 block mb-3">Traffic Sources Analysis</span>
                 <div className="space-y-3">
-                  {product.analytics.trafficSources.map((src, i) => (
+                  {(product.analytics?.trafficSources ?? []).map((src, i) => (
                     <div key={i} className="space-y-1">
                       <div className="flex justify-between text-xs text-slate-600 font-medium">
                         <span>{src.source}</span>
@@ -1054,7 +1055,7 @@ export default function ProductDashboardView({
               <h4 className="font-bold text-slate-800 text-sm tracking-tight mb-2">Version history and checkpoints</h4>
               
               <div className="space-y-4">
-                {product.versions.map((ver, idx) => (
+                {(product?.versions ?? []).map((ver, idx) => (
                   <div key={idx} className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">

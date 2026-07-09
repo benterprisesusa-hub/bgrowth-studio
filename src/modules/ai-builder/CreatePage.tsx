@@ -757,7 +757,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                             Formula: {structureData.formulas || "N/A"}
                           </p>
                           <ul className="space-y-1">
-                            {structureData.outputs && structureData.outputs.map((out: any, idx: number) => (
+                            {(structureData.outputs ?? []).map((out: any, idx: number) => (
                               <li key={idx} className="text-xs text-slate-600 font-semibold flex justify-between">
                                 <span>{out.label}</span>
                                 <span className="text-slate-400 font-mono text-[9px]">{out.formula}</span>
@@ -839,7 +839,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                     <div className="p-4 bg-slate-50/50 border border-slate-100/50 rounded-2xl col-span-2">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Mockups Compilation List</span>
                       <div className="flex flex-wrap gap-2">
-                        {bp.generatedAssets?.mockups && bp.generatedAssets.mockups.map((mock: string, idx: number) => (
+                        {(bp.generatedAssets?.mockups ?? []).map((mock: string, idx: number) => (
                           <span key={idx} className="bg-white border border-slate-100 px-3 py-1 rounded-xl text-xs font-semibold text-slate-600">
                             {mock}
                           </span>
