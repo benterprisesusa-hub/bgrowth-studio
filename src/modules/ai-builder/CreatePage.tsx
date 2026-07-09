@@ -1314,7 +1314,8 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {recentProducts.map((p) => {
-              const categoryDetails = POPULAR_CATEGORIES.find(c => c.type === p.structure.productType) || POPULAR_CATEGORIES[0];
+              const productType = p?.structure?.productType ?? 'Guide';
+              const categoryDetails = POPULAR_CATEGORIES.find(c => c.type === productType) || POPULAR_CATEGORIES[0];
               const IconComp = categoryDetails.icon;
 
               return (
@@ -1328,10 +1329,10 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <h4 className="font-bold text-slate-800 text-xs truncate group-hover:text-indigo-600 transition-colors">
-                      {p.structure.name}
+                      {p?.structure?.name ?? 'Untitled'}
                     </h4>
                     <span className="text-[9px] font-semibold text-slate-400 tracking-wide uppercase block mt-0.5">
-                      {p.structure.productType}
+                      {productType}
                     </span>
                     <span className="text-[9px] text-slate-400 block mt-0.5">
                       Updated recently
