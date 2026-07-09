@@ -41,7 +41,7 @@ export default function Header({ credits, currentTab }: HeaderProps) {
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 border border-indigo-100/50 shadow-sm shadow-indigo-50/30">
           <Sparkles className="w-3.5 h-3.5 text-indigo-600 fill-indigo-100" />
           <span className="text-[11px] font-bold text-indigo-700 tracking-tight">
-            AI Credits: {credits.toLocaleString()}
+            AI Credits: {(credits ?? 0).toLocaleString()}
           </span>
         </div>
 

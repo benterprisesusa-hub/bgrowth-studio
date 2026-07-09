@@ -401,7 +401,7 @@ export default function ProductLayoutPreview({ bp, bpName, bpType, bpSellingPric
                             {structureData.outputs?.[0]?.label || 'Resultado da Fórmula'}
                           </span>
                           <strong className="text-xl font-black text-emerald-800 block mt-1 font-mono">
-                            ${calculateResult().toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            ${(calculateResult() ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </strong>
                           <span className="text-[7px] text-slate-400 block mt-0.5 font-mono">
                             Fórmula: {structureData.formulas || 'Soma de Variáveis'}
