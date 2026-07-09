@@ -370,6 +370,127 @@ export default function ProductDashboardView({
                 </div>
               </div>
 
+              {/* Open in Tool CTA */}
+              {['Checklist', 'Planner', 'Calculator'].includes(product.structure?.productType ?? '') && (
+                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-5 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-slate-800">Ready to build this {product.structure?.productType}?</p>
+                    <p className="text-xs text-slate-500 mt-0.5">Open in {product.structure?.productType === 'Checklist' ? 'Checklist Builder' : product.structure?.productType === 'Planner' ? 'Planner Engine' : 'Calculator Engine'} with all content pre-loaded.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const type = product.structure?.productType;
+                      if (type === 'Checklist') {
+                        // Convert to Checklist Builder format
+                        const checklist = {
+                          id: `ai-${product.id}`,
+                          name: product.structure?.name ?? 'AI Generated Checklist',
+                          description: product.structure?.shortDescription ?? '',
+                          primaryColor: '#1061EC',
+                          sections: (product.content?.document?.sections ?? []).map((sec: any, idx: number) => ({
+                            id: `sec-${idx}`,
+                            number: idx + 1,
+                            title: sec.heading ?? `Section ${idx + 1}`,
+                            description: sec.body ?? '',
+                            icon: 'checklist',
+                            whyItMatters: '',
+                            tip: '',
+                            optional: false,
+                            type: 'checklist',
+                            fields: (sec.tasks ?? [sec.body]).filter(Boolean).map((task: string, fidx: number) => ({
+                              id: `field-${idx}-${fidx}`,
+                              label: task,
+                              type: 'checkbox',
+                              required: false,
+                            })),
+                          })),
+                          createdAt: new Date().toISOString(),
+                          ownerEmail: 'benterprisesusa@gmail.com',
+                        };
+                        const existing = JSON.parse(localStorage.getItem('bgrowth_checklist_templates') ?? '[]');
+                        localStorage.setItem('bgrowth_checklist_templates', JSON.stringify([checklist, ...existing]));
+                        window.location.href = window.location.origin + '/?tool=checklist';
+                      } else if (type === 'Planner') {
+                        // Convert to Planner Engine format
+                        const planner = {
+                          id: `ai-${product.id}`,
+                          publishStatus: 'draft',
+                          createdAt: new Date().toISOString(),
+                          updatedAt: new Date().toISOString(),
+                          uses: 0,
+                          settings: {
+                            name: product.structure?.name ?? 'AI Generated Planner',
+                            description: product.structure?.shortDescription ?? '',
+                            coverImage: null,
+                            icon: '📋',
+                            primaryColor: '#7C3AED',
+                            accentColor: '#1E1B4B',
+                            category: 'Business',
+                            difficulty: product.structure?.difficulty ?? 'Beginner',
+                            language: 'English',
+                            author: product.structure?.author ?? 'BGrowth Studio',
+                            tags: product.structure?.tags ?? [],
+                            estimatedDuration: product.structure?.estimatedCompletionTime ?? '30 minutes/day',
+                            pageSize: 'A4',
+                            pageOrientation: 'portrait',
+                            exportPdf: true,
+                            exportPrint: true,
+                            allowShare: true,
+                            version: '1.0',
+                          },
+                          blocks: (product.content?.document?.sections ?? []).map((sec: any, idx: number) => ({
+                            id: `block-${idx}`,
+                            title: sec.heading ?? `Section ${idx + 1}`,
+                            description: sec.body ?? '',
+                            icon: '📝',
+                            color: '#7C3AED',
+                            enabled: true,
+                            config: { type: 'notes', placeholder: sec.body ?? '', maxLength: 2000, lineRuled: true },
+                          })),
+                        };
+                        const existing = JSON.parse(localStorage.getItem('bgrowth.planners') ?? '[]');
+                        localStorage.setItem('bgrowth.planners', JSON.stringify([planner, ...existing]));
+                        window.location.href = window.location.origin + '/?tool=planner';
+                      } else if (type === 'Calculator') {
+                        // Convert to Calculator Engine format
+                        const calc = {
+                          productId: `ai-${product.id}`,
+                          name: product.structure?.name ?? 'AI Generated Calculator',
+                          subtitle: product.structure?.shortDescription ?? '',
+                          category: 'Business Calculators',
+                          icon: 'calculator',
+                          primaryColor: '#0EA5A0',
+                          sections: [{
+                            id: 'inputs',
+                            number: 1,
+                            title: 'Inputs',
+                            description: 'Enter your values',
+                            icon: 'calculator',
+                            fields: (product.content?.document?.sections ?? []).flatMap((sec: any, idx: number) =>
+                              (sec.tasks ?? [sec.heading]).filter(Boolean).map((task: string, fidx: number) => ({
+                                id: `field-${idx}-${fidx}`,
+                                label: task,
+                                type: 'number',
+                                defaultValue: 0,
+                              }))
+                            ),
+                          }],
+                          formulas: [],
+                          results: [],
+                        };
+                        const existing = JSON.parse(localStorage.getItem('bgrowth.custom.calculators') ?? '[]');
+                        localStorage.setItem('bgrowth.custom.calculators', JSON.stringify([calc, ...existing]));
+                        window.location.href = window.location.origin + '/?tool=calculator';
+                      }
+                    }}
+                    className="flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-indigo-700 shrink-0"
+                  >
+                    Open in {product.structure?.productType === 'Checklist' ? 'Checklist Builder' : product.structure?.productType === 'Planner' ? 'Planner Engine' : 'Calculator Engine'} →
+                  </button>
+                </div>
+              )}
+
               {/* AI Analysis Report Card */}
               <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
                 <div className="flex items-center gap-2.5 border-b border-slate-50 pb-4 mb-4">

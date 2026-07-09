@@ -194,10 +194,11 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
           {currentTab === 'product-dashboard' && activeProduct && (
             <ProductDashboardView
               product={activeProduct}
-              onUpdate={handleUpdateProduct}
-              onDelete={handleDeleteProduct}
-              onImprove={handleImproveProduct}
               onBack={() => setCurrentTab('products')}
+              onUpdateProduct={handleUpdateProduct}
+              onImproveProduct={handleImproveProduct}
+              isImproving={false}
+              creditsCostConfigs={creditCosts}
             />
           )}
           {currentTab === 'analytics' && (
