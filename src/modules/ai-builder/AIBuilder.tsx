@@ -27,28 +27,62 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
     { action: 'Aesthetic Layout Adjustments', cost: 40 },
   ]);
 
+  const normalizeProduct = (p: any): DigitalProduct => ({
+    ...p,
+    status: p.status || 'Draft',
+    isFavorite: p.isFavorite || false,
+    versions: p.versions || [],
+    analytics: {
+      views: 0, downloads: 0, sales: 0, revenue: 0,
+      conversionRate: 0, avgRating: 0, aiCreditsUsed: 0,
+      ...(p.analytics || {}),
+    },
+    structure: {
+      name: '', shortDescription: '', longDescription: '', summary: '',
+      features: [], benefits: [], learningOutcomes: [], tags: [],
+      keywords: [], categories: [], productType: 'Guide', version: '1.0',
+      author: 'BGrowth Studio', language: 'English (US)',
+      industry: 'Business Services', difficulty: 'Intermediate',
+      estimatedCompletionTime: '1 Hour',
+      ...(p.structure || {}),
+    },
+    analysis: {
+      category: 'Guide', targetAudience: '', difficulty: 'Intermediate',
+      industry: 'Business Services', productFormat: 'PDF',
+      businessGoal: '', customerPainPoints: [], desiredOutcome: '',
+      sellingOpportunities: [],
+      ...(p.analysis || {}),
+    },
+    content: p.content || { document: { title: '', sections: [], conclusion: '' } },
+    assets: {
+      cover: { bgGradientStart: 'from-indigo-600', bgGradientEnd: 'to-indigo-950', textColor: 'text-white', accentColor: 'text-yellow-300', iconName: 'FileText', tagline: '' },
+      pricing: { suggestedPrice: 29.99, priceRange: '$19 - $49', bundlePrice: 79.99 },
+      mockups: [],
+      ...(p.assets || {}),
+    },
+    marketing: {
+      headline: '', subheadline: '', productDescription: '',
+      salesCopy: '', cta: 'Buy Now', seoTitle: '', seoDescription: '',
+      etsyListing: '', gumroadPitch: '', bgrowthPitch: '',
+      ...(p.marketing || {}),
+    },
+  });
+
   const [products, setProducts] = useState<DigitalProduct[]>(() => {
     try {
       const saved = localStorage.getItem('bgrowth_studio_products_v3');
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // Ensure all products have required fields
           return parsed
             .filter((p: any) => p && p.id && !p.id.startsWith('seed_'))
-            .map((p: any) => ({
-              ...p,
-              analytics: {
-                views: 0, downloads: 0, sales: 0, revenue: 0,
-                conversionRate: 0, avgRating: 0, aiCreditsUsed: 0,
-                ...(p.analytics || {}),
-              },
-              structure: p.structure || { name: 'Untitled', shortDescription: '' },
-              status: p.status || 'Draft',
-            }));
+            .map(normalizeProduct);
         }
       }
-    } catch { /* */ }
+    } catch {
+      // Clear corrupted data
+      localStorage.removeItem('bgrowth_studio_products_v3');
+    }
     return SEEDED_PRODUCTS;
   });
 
@@ -71,8 +105,9 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
       });
       const data = await response.json();
       if (data.product) {
-        setProducts(prev => [data.product, ...prev]);
-        setActiveProduct(data.product);
+        const normalized = normalizeProduct(data.product);
+        setProducts(prev => [normalized, ...prev]);
+        setActiveProduct(normalized);
         setCurrentTab('product-dashboard');
       }
     } catch (error) {
@@ -132,8 +167,9 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
             <CreatePage
               onGenerate={handleGenerateProduct}
               isGenerating={isGenerating}
-              products={products}
+              recentProducts={products}
               onSelectProduct={handleSelectProduct}
+              credits={credits}
             />
           )}
           {currentTab === 'dashboard' && (
@@ -149,7 +185,10 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
               products={products}
               onSelectProduct={handleSelectProduct}
               onDeleteProduct={handleDeleteProduct}
-              onTabChange={setCurrentTab}
+              onToggleFavorite={(id) => {
+                setProducts(prev => prev.map(p => p.id === id ? { ...p, isFavorite: !p.isFavorite } : p));
+              }}
+              onCreateNew={() => setCurrentTab('create')}
             />
           )}
           {currentTab === 'product-dashboard' && activeProduct && (
