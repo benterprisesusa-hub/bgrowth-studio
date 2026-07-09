@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   BookOpen, LayoutGrid, Star, Trash2, Plus,
   ChevronRight, Layers, Settings, Link, Check,
@@ -13,6 +13,7 @@ import {
 import { PLANNER_TEMPLATES } from './configs/templates';
 import { cn } from '../../lib/utils';
 import { Toast } from '../../components/Toast';
+import { gasGetPlanners, gasSavePlanners } from '../../lib/studioSync';
 
 type SidebarView = 'my-planners' | 'templates' | 'favorites' | 'trash';
 type ActiveScreen = 'list' | 'builder' | 'fill';
@@ -22,8 +23,18 @@ interface PlannerEngineProps {
   initialPlannerId?: string;
 }
 
-export function PlannerEngine({ ownerEmail: _, initialPlannerId }: PlannerEngineProps) {
+export function PlannerEngine({ ownerEmail, initialPlannerId }: PlannerEngineProps) {
   const [planners, setPlanners] = useState<PlannerConfig[]>(() => loadPlanners());
+
+  // Load from GAS on mount
+  useEffect(() => {
+    gasGetPlanners(ownerEmail ?? 'benterprisesusa@gmail.com').then(gasPlanners => {
+      if (gasPlanners.length > 0) {
+        setPlanners(gasPlanners);
+        savePlanners(gasPlanners);
+      }
+    });
+  }, []);
   const [sidebarView, setSidebarView] = useState<SidebarView>('my-planners');
   const [screen, setScreen] = useState<ActiveScreen>(() => initialPlannerId ? 'fill' : 'list');
   const [activePlanner, setActivePlanner] = useState<PlannerConfig | null>(
@@ -43,6 +54,7 @@ export function PlannerEngine({ ownerEmail: _, initialPlannerId }: PlannerEngine
       : [...planners, planner];
     setPlanners(updated);
     savePlanners(updated);
+    gasSavePlanners(ownerEmail ?? 'benterprisesusa@gmail.com', updated);
   };
 
   const deletePlanner = (id: string) => {

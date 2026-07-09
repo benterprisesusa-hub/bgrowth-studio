@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { gasSavePlanners, gasSaveCalculators } from '../../lib/studioSync';
 import {
   Sparkles,
   ArrowLeft,
@@ -450,7 +451,10 @@ export default function ProductDashboardView({
                           })),
                         };
                         const existing = JSON.parse(localStorage.getItem('bgrowth.planners') ?? '[]');
-                        localStorage.setItem('bgrowth.planners', JSON.stringify([planner, ...existing]));
+                        const updated = [planner, ...existing];
+                        localStorage.setItem('bgrowth.planners', JSON.stringify(updated));
+                        const email = new URLSearchParams(window.location.search).get('user') ?? 'benterprisesusa@gmail.com';
+                        gasSavePlanners(email, updated);
                         window.location.href = window.location.origin + '/?tool=planner';
                       } else if (type === 'Calculator') {
                         // Convert to Calculator Engine format
@@ -480,7 +484,10 @@ export default function ProductDashboardView({
                           results: [],
                         };
                         const existing = JSON.parse(localStorage.getItem('bgrowth.custom.calculators') ?? '[]');
-                        localStorage.setItem('bgrowth.custom.calculators', JSON.stringify([calc, ...existing]));
+                        const updated = [calc, ...existing];
+                        localStorage.setItem('bgrowth.custom.calculators', JSON.stringify(updated));
+                        const email = new URLSearchParams(window.location.search).get('user') ?? 'benterprisesusa@gmail.com';
+                        gasSaveCalculators(email, updated);
                         window.location.href = window.location.origin + '/?tool=calculator';
                       }
                     }}

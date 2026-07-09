@@ -3,6 +3,7 @@ import { Save, Printer, Download, History, Plus, StickyNote, Calculator, Trendin
 import { CalcField } from './components/CalcField';
 import { ResultsPanel } from './components/ResultsPanel';
 import { DonutChart } from './components/DonutChart';
+import { gasGetCalculators, gasSaveCalculators } from '../../lib/studioSync';
 import { CalculatorBuilder } from './builder/CalculatorBuilder';
 import { CalcProgressBar } from './components/CalcProgressBar';
 import { computeAll, calcCompletion, buildDefaultValues, formatResult } from './formulaEngine';
@@ -355,6 +356,17 @@ export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEng
 
   const allCalcs = [...CALCULATORS, ...customCalcs];
 
+  // Load custom calculators from GAS on mount
+  useEffect(() => {
+    const email = new URLSearchParams(window.location.search).get('user') ?? 'benterprisesusa@gmail.com';
+    gasGetCalculators(email).then(gasCalcs => {
+      if (gasCalcs.length > 0) {
+        setCustomCalcs(gasCalcs);
+        localStorage.setItem('bgrowth.custom.calculators', JSON.stringify(gasCalcs));
+      }
+    });
+  }, []);
+
   const handleCopyLink = (productId: string) => {
     const url = `${window.location.origin}/?calc=${productId}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -373,6 +385,8 @@ export function CalculatorEngine({ ownerEmail: _, initialCalcId }: CalculatorEng
       const updated = [...customCalcs.filter(c => c.productId !== config.productId), config];
       setCustomCalcs(updated);
       localStorage.setItem('bgrowth.custom.calculators', JSON.stringify(updated));
+      const email = new URLSearchParams(window.location.search).get('user') ?? 'benterprisesusa@gmail.com';
+      gasSaveCalculators(email, updated);
       setShowImport(false);
       setImportJson('');
       setImportError('');

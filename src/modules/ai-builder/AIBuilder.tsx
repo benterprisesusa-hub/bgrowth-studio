@@ -8,6 +8,7 @@ import DashboardOverview from './DashboardOverview';
 import AnalyticsView from './AnalyticsView';
 import SettingsView from './SettingsView';
 import { DigitalProduct, AICreditCost } from './types';
+import { gasGetAIProducts, gasSaveAIProduct, gasDeleteAIProduct } from '../../lib/studioSync';
 
 const SEEDED_PRODUCTS: DigitalProduct[] = [];
 
@@ -86,6 +87,18 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
     return SEEDED_PRODUCTS;
   });
 
+  // Load from GAS on mount
+  useEffect(() => {
+    gasGetAIProducts(ownerEmail ?? 'benterprisesusa@gmail.com').then(gasProducts => {
+      if (gasProducts.length > 0) {
+        const normalized = gasProducts.map(normalizeProduct);
+        setProducts(normalized);
+        localStorage.setItem('bgrowth_studio_products_v3', JSON.stringify(normalized));
+      }
+    });
+  }, []);
+
+  // Save to localStorage whenever products change
   useEffect(() => {
     localStorage.setItem('bgrowth_studio_products_v3', JSON.stringify(products));
   }, [products]);
@@ -109,6 +122,8 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
         setProducts(prev => [normalized, ...prev]);
         setActiveProduct(normalized);
         setCurrentTab('product-dashboard');
+        // Sync to GAS
+        gasSaveAIProduct(ownerEmail ?? 'benterprisesusa@gmail.com', normalized);
       }
     } catch (error) {
       console.error('Generation error:', error);
@@ -120,6 +135,8 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
   const handleUpdateProduct = (updated: DigitalProduct) => {
     setProducts(prev => prev.map(p => p.id === updated.id ? updated : p));
     setActiveProduct(updated);
+    // Sync to GAS
+    gasSaveAIProduct(ownerEmail ?? 'benterprisesusa@gmail.com', updated);
   };
 
   const handleDeleteProduct = (id: string) => {
@@ -128,6 +145,8 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
       setActiveProduct(null);
       setCurrentTab('create');
     }
+    // Sync to GAS
+    gasDeleteAIProduct(ownerEmail ?? 'benterprisesusa@gmail.com', id);
   };
 
   const handleSelectProduct = (product: DigitalProduct) => {
