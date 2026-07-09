@@ -6,6 +6,7 @@ import { StudioNav } from './studio/StudioNav';
 import { ChecklistBuilderApp } from './modules/checklist-builder/ChecklistBuilderApp';
 import { PlannerEngine } from './modules/planner-engine/PlannerEngine';
 import { CalculatorEngine } from './modules/calculator-engine/CalculatorEngine';
+import { AIBuilder } from './modules/ai-builder/AIBuilder';
 import { ProductHeader } from './components/ProductHeader';
 import { Sidebar } from './components/Sidebar';
 import { WorkflowAccordion } from './engine/components/WorkflowAccordion';
@@ -22,12 +23,13 @@ import { downloadElementAsPdf } from './lib/pdf';
 import { api_getTemplate } from './modules/checklist-builder/api';
 import type { ChecklistConfig, ChecklistData } from './engine/types';
 
-type ActiveTool = null | 'checklist' | 'planner' | 'calculator';
+type ActiveTool = null | 'checklist' | 'planner' | 'calculator' | 'ai-builder';
 
 const TOOL_NAMES: Record<string, string> = {
   checklist: 'Checklist Builder',
   planner: 'Planner Engine',
   calculator: 'Calculator Engine',
+  'ai-builder': 'AI Product Builder',
 };
 
 // -----------------------------------------------------------------------
@@ -172,7 +174,7 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
 
   const [activeTool, setActiveTool] = useState<ActiveTool>(() => {
     const tool = params.get('tool');
-    if (tool === 'checklist' || tool === 'planner' || tool === 'calculator') return tool;
+    if (tool === 'checklist' || tool === 'planner' || tool === 'calculator' || tool === 'ai-builder') return tool;
     return null;
   });
 
@@ -208,6 +210,7 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
         {activeTool === 'checklist' && <ChecklistBuilderApp ownerEmail={ownerEmail} embedded />}
         {activeTool === 'planner' && <PlannerEngine ownerEmail={ownerEmail} />}
         {activeTool === 'calculator' && <CalculatorEngine ownerEmail={ownerEmail} />}
+        {activeTool === 'ai-builder' && <AIBuilder ownerEmail={ownerEmail} />}
       </div>
     </div>
   );

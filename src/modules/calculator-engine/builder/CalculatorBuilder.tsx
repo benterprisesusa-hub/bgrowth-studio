@@ -67,9 +67,10 @@ export function CalculatorBuilder({ onBack, initialConfig, ownerEmail = 'benterp
   const handleSave = () => {
     const DRAFTS_KEY = 'bgrowth.calculator.drafts';
     const drafts = JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? '[]');
-    const existingIndex = drafts.findIndex((d: any) => d.id === config.details.name);
+    const id = config.details.name || `calc-${Date.now()}`;
+    const existingIndex = drafts.findIndex((d: any) => d.id === id);
     const draft = {
-      id: config.details.name || `calc-${Date.now()}`,
+      id,
       details: config.details,
       categories: config.categories,
       fields: config.fields,
@@ -78,11 +79,11 @@ export function CalculatorBuilder({ onBack, initialConfig, ownerEmail = 'benterp
       charts: config.charts,
       recommendations: config.recommendations,
       publishSettings: { status: 'draft', allowSaveResults: true, allowPdfExport: true, allowPrint: true, allowShare: true },
-      createdAt: new Date().toISOString(),
+      createdAt: existingIndex >= 0 ? drafts[existingIndex].createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      uses: 0,
+      uses: existingIndex >= 0 ? (drafts[existingIndex].uses ?? 0) : 0,
     };
-    if (existingIndex >= 0) drafts[existingIndex] = { ...drafts[existingIndex], ...draft, updatedAt: new Date().toISOString() };
+    if (existingIndex >= 0) drafts[existingIndex] = draft;
     else drafts.push(draft);
     localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
     alert('Saved ✓');
@@ -91,9 +92,10 @@ export function CalculatorBuilder({ onBack, initialConfig, ownerEmail = 'benterp
   const handlePublish = () => {
     const DRAFTS_KEY = 'bgrowth.calculator.drafts';
     const drafts = JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? '[]');
-    const existingIndex = drafts.findIndex((d: any) => d.id === config.details.name);
+    const id = config.details.name || `calc-${Date.now()}`;
+    const existingIndex = drafts.findIndex((d: any) => d.id === id);
     const draft = {
-      id: config.details.name || `calc-${Date.now()}`,
+      id,
       details: config.details,
       categories: config.categories,
       fields: config.fields,
@@ -102,11 +104,11 @@ export function CalculatorBuilder({ onBack, initialConfig, ownerEmail = 'benterp
       charts: config.charts,
       recommendations: config.recommendations,
       publishSettings: { status: 'public', allowSaveResults: true, allowPdfExport: true, allowPrint: true, allowShare: true },
-      createdAt: new Date().toISOString(),
+      createdAt: existingIndex >= 0 ? drafts[existingIndex].createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      uses: 0,
+      uses: existingIndex >= 0 ? (drafts[existingIndex].uses ?? 0) : 0,
     };
-    if (existingIndex >= 0) drafts[existingIndex] = { ...drafts[existingIndex], ...draft, updatedAt: new Date().toISOString() };
+    if (existingIndex >= 0) drafts[existingIndex] = draft;
     else drafts.push(draft);
     localStorage.setItem(DRAFTS_KEY, JSON.stringify(drafts));
     alert('Published! 🎉');

@@ -1,4 +1,4 @@
-import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator } from 'lucide-react';
+import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator, Sparkles } from 'lucide-react';
 import type { StudioTool } from './types';
 
 const TOOLS: StudioTool[] = [
@@ -27,6 +27,14 @@ const TOOLS: StudioTool[] = [
     status: 'live',
   },
   {
+    id: 'ai-builder',
+    name: 'AI Product Builder',
+    description: 'Describe your product idea and AI will generate a complete digital product blueprint instantly.',
+    icon: 'ai-builder',
+    color: '#7C3AED',
+    status: 'live',
+  },
+  {
     id: 'form',
     name: 'Form Builder',
     description: 'Build smart forms and surveys with conditional logic and response tracking.',
@@ -40,6 +48,7 @@ const ICONS: Record<string, React.ReactNode> = {
   checklist: <ClipboardList className="h-7 w-7" />,
   planner: <BookOpen className="h-7 w-7" />,
   calculator: <Calculator className="h-7 w-7" />,
+  'ai-builder': <Sparkles className="h-7 w-7" />,
   form: <FileText className="h-7 w-7" />,
   invoice: <Receipt className="h-7 w-7" />,
 };
