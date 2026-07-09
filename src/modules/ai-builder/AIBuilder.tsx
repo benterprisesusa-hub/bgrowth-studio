@@ -16,7 +16,7 @@ interface AIBuilderProps {
   ownerEmail?: string;
 }
 
-export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
+export function AIBuilder({ ownerEmail }: AIBuilderProps) {
   const [currentTab, setCurrentTab] = useState<string>('create');
   const [activeProduct, setActiveProduct] = useState<DigitalProduct | null>(null);
   const [credits, setCredits] = useState<number>(12450);
