@@ -28,15 +28,27 @@ export function AIBuilder({ ownerEmail: _ }: AIBuilderProps) {
   ]);
 
   const [products, setProducts] = useState<DigitalProduct[]>(() => {
-    const saved = localStorage.getItem('bgrowth_studio_products_v3');
-    if (saved) {
-      try {
+    try {
+      const saved = localStorage.getItem('bgrowth_studio_products_v3');
+      if (saved) {
         const parsed = JSON.parse(saved);
-        return Array.isArray(parsed)
-          ? parsed.filter((p: any) => !p.id.startsWith('seed_'))
-          : SEEDED_PRODUCTS;
-      } catch { return SEEDED_PRODUCTS; }
-    }
+        if (Array.isArray(parsed)) {
+          // Ensure all products have required fields
+          return parsed
+            .filter((p: any) => p && p.id && !p.id.startsWith('seed_'))
+            .map((p: any) => ({
+              ...p,
+              analytics: {
+                views: 0, downloads: 0, sales: 0, revenue: 0,
+                conversionRate: 0, avgRating: 0, aiCreditsUsed: 0,
+                ...(p.analytics || {}),
+              },
+              structure: p.structure || { name: 'Untitled', shortDescription: '' },
+              status: p.status || 'Draft',
+            }));
+        }
+      }
+    } catch { /* */ }
     return SEEDED_PRODUCTS;
   });
 

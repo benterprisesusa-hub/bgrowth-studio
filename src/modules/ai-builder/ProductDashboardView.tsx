@@ -184,7 +184,7 @@ export default function ProductDashboardView({
 
   // Get active Icon Component based on cover metadata
   const getCoverIconComponent = () => {
-    const iconName = product.assets.cover.iconName;
+    const iconName = product.assets?.cover?.iconName ?? "FileText";
     switch (iconName) {
       case 'CheckSquare': return ClipboardList;
       case 'BookOpen': return BookOpen;
@@ -213,13 +213,13 @@ export default function ProductDashboardView({
           <div className="w-px h-5 bg-slate-100"></div>
           <div className="flex items-center gap-2">
             <span className="font-extrabold text-slate-800 text-xs tracking-tight">
-              {product.structure.name}
+              {product.structure?.name ?? "Untitled"}
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-              {product.structure.productType}
+              {product.structure?.productType ?? "Guide"}
             </span>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">
-              v{product.structure.version}
+              v{product.structure?.version ?? "1.0"}
             </span>
           </div>
         </div>
@@ -229,7 +229,7 @@ export default function ProductDashboardView({
           <button
             onClick={() => {
               // Trigger a save simulation
-              const nextVer = (parseFloat(product.structure.version) + 0.1).toFixed(1);
+              const nextVer = (parseFloat(product.structure?.version ?? "1.0") + 0.1).toFixed(1);
               const copy = JSON.parse(JSON.stringify(product));
               copy.structure.version = nextVer;
               copy.updatedAt = new Date().toISOString();
@@ -304,7 +304,7 @@ export default function ProductDashboardView({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* Visual Cover mockup */}
-                <div className={`p-6 rounded-2xl bg-gradient-to-br ${product.assets.cover.bgGradientStart} ${product.assets.cover.bgGradientEnd} ${product.assets.cover.textColor} flex flex-col justify-between h-72 shadow-lg relative overflow-hidden`}>
+                <div className={`p-6 rounded-2xl bg-gradient-to-br ${product.assets?.cover?.bgGradientStart ?? "from-indigo-600"} ${product.assets?.cover?.bgGradientEnd ?? "to-indigo-950"} ${product.assets?.cover?.textColor ?? "text-white"} flex flex-col justify-between h-72 shadow-lg relative overflow-hidden`}>
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl"></div>
                   
                   <div className="flex items-center justify-between">
@@ -316,17 +316,17 @@ export default function ProductDashboardView({
 
                   <div>
                     <h3 className="font-extrabold text-lg tracking-tight leading-tight">
-                      {product.structure.name}
+                      {product.structure?.name ?? "Untitled"}
                     </h3>
                     <p className="text-[10px] text-white/80 line-clamp-2 mt-2 leading-relaxed">
-                      {product.structure.shortDescription}
+                      {product.structure?.shortDescription ?? ""}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-2 text-[10px] text-white/80">
-                    <span className="font-medium">By {product.structure.author}</span>
+                    <span className="font-medium">By {product.structure?.author ?? "BGrowth Studio"}</span>
                     <span className="font-bold bg-white/20 px-2 py-0.5 rounded-full">
-                      v{product.structure.version}
+                      v{product.structure?.version ?? "1.0"}
                     </span>
                   </div>
                 </div>
@@ -338,7 +338,7 @@ export default function ProductDashboardView({
                       Product description
                     </span>
                     <h4 className="font-extrabold text-slate-800 text-sm tracking-tight">
-                      {product.structure.name}
+                      {product.structure?.name ?? "Untitled"}
                     </h4>
                     <p className="text-xs text-slate-500 mt-2 leading-relaxed">
                       {product.structure.longDescription}
@@ -718,7 +718,7 @@ export default function ProductDashboardView({
                 {/* Visual Cover mockup block */}
                 <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
                   <span className="text-[10px] text-indigo-600 font-bold uppercase block mb-3">Product Digital Cover (PDF / Notion Banner)</span>
-                  <div className={`p-8 rounded-xl bg-gradient-to-br ${product.assets.cover.bgGradientStart} ${product.assets.cover.bgGradientEnd} ${product.assets.cover.textColor} flex flex-col justify-between h-80 relative overflow-hidden`}>
+                  <div className={`p-8 rounded-xl bg-gradient-to-br ${product.assets?.cover?.bgGradientStart ?? "from-indigo-600"} ${product.assets?.cover?.bgGradientEnd ?? "to-indigo-950"} ${product.assets?.cover?.textColor ?? "text-white"} flex flex-col justify-between h-80 relative overflow-hidden`}>
                     <div className="absolute top-0 right-0 w-36 h-36 bg-white/5 rounded-full blur-2xl"></div>
                     
                     <div className="flex items-center justify-between">
@@ -730,15 +730,15 @@ export default function ProductDashboardView({
 
                     <div>
                       <h3 className="font-extrabold text-xl tracking-tight leading-tight">
-                        {product.structure.name}
+                        {product.structure?.name ?? "Untitled"}
                       </h3>
                       <p className="text-xs text-white/80 line-clamp-2 mt-2 leading-relaxed">
-                        {product.structure.shortDescription}
+                        {product.structure?.shortDescription ?? ""}
                       </p>
                     </div>
 
                     <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-2 text-[11px] text-white/80">
-                      <span className="font-medium">Creator: {product.structure.author}</span>
+                      <span className="font-medium">Creator: {product.structure?.author ?? "BGrowth Studio"}</span>
                       <span className="font-bold bg-white/20 px-2.5 py-0.5 rounded-full">
                         White-Label Lic.
                       </span>
@@ -1006,13 +1006,13 @@ export default function ProductDashboardView({
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
                   <span className="text-[10px] text-slate-400 block font-semibold uppercase">Gross Sales Views</span>
                   <strong className="text-2xl font-extrabold text-slate-800 mt-1 block">
-                    {product.analytics.views.toLocaleString()}
+                    {(product.analytics?.views ?? 0).toLocaleString()}
                   </strong>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
                   <span className="text-[10px] text-slate-400 block font-semibold uppercase">Total Downloads</span>
                   <strong className="text-2xl font-extrabold text-indigo-600 mt-1 block">
-                    {product.analytics.downloads.toLocaleString()}
+                    {(product.analytics?.downloads ?? 0).toLocaleString()}
                   </strong>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
@@ -1024,7 +1024,7 @@ export default function ProductDashboardView({
                 <div className="bg-white rounded-2xl border border-slate-100 p-4 text-center">
                   <span className="text-[10px] text-slate-400 block font-semibold uppercase">Net Earned Revenue</span>
                   <strong className="text-2xl font-extrabold text-slate-800 mt-1 block">
-                    ${product.analytics.revenue.toLocaleString()}
+                    ${(product.analytics?.revenue ?? 0).toLocaleString()}
                   </strong>
                 </div>
               </div>
