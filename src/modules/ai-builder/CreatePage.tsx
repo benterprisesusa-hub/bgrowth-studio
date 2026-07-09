@@ -178,8 +178,8 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
         body: JSON.stringify({ prompt, productType: selectedType })
       });
       const data = await response.json();
-      if (data.blueprint) {
-        const bp = data.blueprint;
+      const bp = data.blueprint || data; // fallback: sometimes returns directly
+      if (bp && bp.overview) {
         setActiveBlueprint(bp);
 
         // Populate editable form values
@@ -195,7 +195,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
         setBpSellingPrice(bp.monetizationStrategy?.sellingPrice || 29.99);
         setTitleApplied(false);
       } else {
-        throw new Error(data.error || "Empty blueprint payload");
+        throw new Error(data.error || "Blueprint response invalid");
       }
     } catch (error) {
       console.error("Blueprint generation error:", error);
