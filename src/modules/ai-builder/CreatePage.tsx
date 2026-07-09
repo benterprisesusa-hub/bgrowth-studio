@@ -647,7 +647,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                   {/* Checklist Structure */}
                   {structureData.checklistSections && (
                     <div className="space-y-6">
-                      {structureData.checklistSections.map((sect: any, sIdx: number) => (
+                      {(structureData.checklistSections ?? []).map((sect: any, sIdx: number) => (
                         <div key={sIdx} className="border border-slate-100 rounded-2xl p-5 bg-slate-50/30">
                           <h4 className="font-bold text-slate-800 text-xs flex items-center gap-2 mb-3">
                             <span className="w-5 h-5 rounded bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center text-[10px]">
@@ -656,7 +656,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                             {sect.title}
                           </h4>
                           <ul className="space-y-2">
-                            {sect.tasks && sect.tasks.map((tsk: string, tIdx: number) => (
+                            {(sect.tasks ?? []).map((tsk: string, tIdx: number) => (
                               <li key={tIdx} className="flex items-start gap-2.5 text-xs text-slate-600 font-medium">
                                 <CheckCircle className="w-3.5 h-3.5 text-indigo-500 shrink-0 mt-0.5" />
                                 <span>{tsk}</span>
@@ -671,7 +671,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                   {/* Course Structure */}
                   {structureData.courseModules && (
                     <div className="space-y-6">
-                      {structureData.courseModules.map((mod: any, mIdx: number) => (
+                      {(structureData.courseModules ?? []).map((mod: any, mIdx: number) => (
                         <div key={mIdx} className="border border-slate-100 rounded-2xl p-5 bg-slate-50/30">
                           <h4 className="font-bold text-slate-800 text-xs flex items-center gap-2 mb-3">
                             <span className="w-5 h-5 rounded bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center text-[10px]">
@@ -680,7 +680,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                             {mod.title}
                           </h4>
                           <ul className="space-y-2 pl-7 list-disc">
-                            {mod.lessons && mod.lessons.map((les: string, lIdx: number) => (
+                            {(mod.lessons ?? []).map((les: string, lIdx: number) => (
                               <li key={lIdx} className="text-xs text-slate-600 font-medium">
                                 {les}
                               </li>
@@ -701,7 +701,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                             <span>Daily Modules</span>
                           </h4>
                           <ul className="space-y-2 list-inside list-disc">
-                            {structureData.plannerDaily.map((item: string, idx: number) => (
+                            {(structureData.plannerDaily ?? []).map((item: string, idx: number) => (
                               <li key={idx} className="text-xs text-slate-600 font-medium leading-relaxed">{item}</li>
                             ))}
                           </ul>
@@ -714,7 +714,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                             <span>Weekly Metrics</span>
                           </h4>
                           <ul className="space-y-2 list-inside list-disc">
-                            {structureData.plannerWeekly.map((item: string, idx: number) => (
+                            {(structureData.plannerWeekly ?? []).map((item: string, idx: number) => (
                               <li key={idx} className="text-xs text-slate-600 font-medium leading-relaxed">{item}</li>
                             ))}
                           </ul>
@@ -727,7 +727,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                             <span>Monthly Milestones</span>
                           </h4>
                           <ul className="space-y-2 list-inside list-disc">
-                            {structureData.plannerMonthly.map((item: string, idx: number) => (
+                            {(structureData.plannerMonthly ?? []).map((item: string, idx: number) => (
                               <li key={idx} className="text-xs text-slate-600 font-medium leading-relaxed">{item}</li>
                             ))}
                           </ul>
@@ -743,7 +743,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                         <div className="border border-slate-100 rounded-2xl p-4 bg-slate-50/40">
                           <span className="text-[10px] font-bold text-slate-400 uppercase block tracking-wider mb-2">Inputs Config</span>
                           <ul className="space-y-1.5">
-                            {structureData.inputs.map((inp: any, idx: number) => (
+                            {(structureData.inputs ?? []).map((inp: any, idx: number) => (
                               <li key={idx} className="text-xs text-slate-600 font-semibold flex items-center justify-between">
                                 <span>{inp.label}</span>
                                 <span className="text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded font-mono text-[10px]">defaultValue: {inp.defaultValue}</span>
@@ -772,7 +772,7 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
                   {/* Guide Chapters */}
                   {structureData.guideChapters && (
                     <div className="space-y-6">
-                      {structureData.guideChapters.map((chap: any, cIdx: number) => (
+                      {(structureData.guideChapters ?? []).map((chap: any, cIdx: number) => (
                         <div key={cIdx} className="border border-slate-100 rounded-2xl p-5 bg-slate-50/30">
                           <h4 className="font-bold text-slate-800 text-xs flex items-center gap-2 mb-3">
                             <span className="w-5 h-5 rounded bg-indigo-50 text-indigo-600 font-bold flex items-center justify-center text-[10px]">
