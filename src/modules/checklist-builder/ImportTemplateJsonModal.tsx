@@ -66,8 +66,9 @@ export function ImportTemplateJsonModal({ isOpen, onClose, onImport }: ImportTem
 
     try {
       const parsed = JSON.parse(jsonText);
-      if (!parsed.brand?.name && !parsed.name) {
-        setError('O JSON deve conter pelo menos um atributo "name" ou "brand.name".');
+
+      if (!parsed.brand?.name && !parsed.name && !parsed.templateName) {
+        setError('O JSON deve conter pelo menos um atributo "name", "templateName" ou "brand.name".');
         return;
       }
       if (!Array.isArray(parsed.sections)) {
@@ -76,8 +77,28 @@ export function ImportTemplateJsonModal({ isOpen, onClose, onImport }: ImportTem
       }
 
       setImporting(true);
-      const name = parsed.brand?.name || parsed.name || 'Checklist Customizado Importado';
-      await onImport(name, JSON.stringify(parsed));
+      const name = parsed.brand?.name || parsed.name || parsed.templateName || 'Checklist Customizado Importado';
+
+      const normalizedSections = parsed.sections.map((s: any, si: number) => ({
+        ...s,
+        id: s.id || `sec_${si + 1}`,
+        number: s.number || si + 1,
+        items: Array.isArray(s.items)
+          ? s.items.map((item: any, ii: number) =>
+              typeof item === 'string'
+                ? { id: `item_${si}_${ii}`, label: item, required: false }
+                : item
+            )
+          : [],
+      }));
+
+      const normalized = {
+        ...parsed,
+        brand: parsed.brand ?? { name, companyLabel: 'BGrowth Club', primaryColor: '#1061EC' },
+        sections: normalizedSections,
+      };
+
+      await onImport(name, JSON.stringify(normalized));
       setJsonText('');
       onClose();
     } catch (err) {
