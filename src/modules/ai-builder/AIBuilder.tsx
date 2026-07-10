@@ -213,6 +213,7 @@ export function AIBuilder({ ownerEmail }: AIBuilderProps) {
           {currentTab === 'product-dashboard' && activeProduct && (
             <ProductDashboardView
               product={activeProduct}
+              ownerEmail={ownerEmail ?? 'benterprisesusa@gmail.com'}
               onBack={() => setCurrentTab('products')}
               onUpdateProduct={handleUpdateProduct}
               onImproveProduct={handleImproveProduct}
