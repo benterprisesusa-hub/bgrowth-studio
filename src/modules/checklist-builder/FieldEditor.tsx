@@ -19,6 +19,8 @@ export function FieldEditor({ field, onChange, onDelete }: FieldEditorProps) {
   const set = <K extends keyof DraftField>(key: K, val: DraftField[K]) =>
     onChange({ ...field, [key]: val });
 
+  const isStatic = field.type === 'title' || field.type === 'static_text';
+
   return (
     <SortableRow id={field._key} className="p-0">
       <div className="flex flex-col gap-3">
@@ -26,13 +28,23 @@ export function FieldEditor({ field, onChange, onDelete }: FieldEditorProps) {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <div className="flex-1">
             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
-              Field Label
+              {field.type === 'title' ? 'Heading Text' : field.type === 'static_text' ? 'Paragraph Text' : 'Field Label'}
             </label>
-            <Input
-              value={field.label}
-              placeholder="e.g. Client Name"
-              onChange={(e) => set('label', e.target.value)}
-            />
+            {field.type === 'static_text' ? (
+              <textarea
+                rows={2}
+                className="w-full resize-y rounded-lg border border-navy-100 bg-white px-3 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                value={field.label}
+                placeholder="Enter information or paragraph text..."
+                onChange={(e) => set('label', e.target.value)}
+              />
+            ) : (
+              <Input
+                value={field.label}
+                placeholder={field.type === 'title' ? 'Enter heading title...' : 'e.g. Client Name'}
+                onChange={(e) => set('label', e.target.value)}
+              />
+            )}
           </div>
           <div className="w-full sm:w-32">
             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
@@ -48,15 +60,17 @@ export function FieldEditor({ field, onChange, onDelete }: FieldEditorProps) {
             </Select>
           </div>
           <div className="flex items-center gap-2 pb-1">
-            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-navy-600">
-              <input
-                type="checkbox"
-                checked={!!field.required}
-                onChange={(e) => set('required', e.target.checked)}
-                className="h-4 w-4 rounded accent-brand"
-              />
-              Required
-            </label>
+            {!isStatic && (
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-navy-600">
+                <input
+                  type="checkbox"
+                  checked={!!field.required}
+                  onChange={(e) => set('required', e.target.checked)}
+                  className="h-4 w-4 rounded accent-brand"
+                />
+                Required
+              </label>
+            )}
             <button
               type="button"
               onClick={onDelete}
@@ -69,16 +83,18 @@ export function FieldEditor({ field, onChange, onDelete }: FieldEditorProps) {
         </div>
 
         {/* Row 2: placeholder */}
-        <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
-            Placeholder (optional)
-          </label>
-          <Input
-            value={field.placeholder ?? ''}
-            placeholder="e.g. John Smith"
-            onChange={(e) => set('placeholder', e.target.value)}
-          />
-        </div>
+        {!isStatic && (
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
+              Placeholder (optional)
+            </label>
+            <Input
+              value={field.placeholder ?? ''}
+              placeholder="e.g. John Smith"
+              onChange={(e) => set('placeholder', e.target.value)}
+            />
+          </div>
+        )}
 
         {/* Row 3: dropdown options (only for select type) */}
         {field.type === 'select' && (

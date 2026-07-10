@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { LayoutList, Plus, Pencil, Trash2, ChevronRight, Link, Check } from 'lucide-react';
+import { LayoutList, Plus, Pencil, Trash2, ChevronRight, Link, Check, Upload, Download } from 'lucide-react';
 import { ModuleHeader } from './ModuleHeader';
 import { EmptyState } from './EmptyState';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { api_getTemplates, api_deleteTemplate } from './api';
+import { api_getTemplates, api_deleteTemplate, api_saveTemplate } from './api';
 import type { ChecklistTemplate, ParsedTemplate } from './types';
 import type { BuilderDraft } from './builderTypes';
+import { ImportTemplateJsonModal } from './ImportTemplateJsonModal';
 
 interface TemplatesScreenProps {
   ownerEmail: string;
@@ -22,6 +23,39 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ChecklistTemplate | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showJsonImportModal, setShowJsonImportModal] = useState(false);
+
+  const handleImportTemplate = async (name: string, configJson: string) => {
+    try {
+      setLoading(true);
+      const saved = await api_saveTemplate({
+        ownerEmail,
+        name,
+        configJson,
+      });
+      setTemplates((prev) => [saved, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Falha ao importar o modelo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExportJson = (e: React.MouseEvent, t: ChecklistTemplate) => {
+    e.stopPropagation();
+    try {
+      const config = JSON.parse(t.configJson);
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `${t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-template.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } catch {
+      setError('Failed to export this template as JSON.');
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -105,10 +139,16 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
         title="Checklist Templates"
         subtitle="Select a template to fill out, or create a new one"
         actions={
-          <PrimaryButton size="sm" onClick={onNew}>
-            <Plus className="h-4 w-4" />
-            New Template
-          </PrimaryButton>
+          <div className="flex items-center gap-2">
+            <SecondaryButton size="sm" onClick={() => setShowJsonImportModal(true)}>
+              <Upload className="h-4 w-4" />
+              Importar JSON
+            </SecondaryButton>
+            <PrimaryButton size="sm" onClick={onNew}>
+              <Plus className="h-4 w-4" />
+              New Template
+            </PrimaryButton>
+          </div>
         }
       />
 
@@ -164,6 +204,11 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
                         : <><Link className="h-3.5 w-3.5" /></>}
                     </SecondaryButton>
 
+                    {/* Export JSON */}
+                    <SecondaryButton size="sm" onClick={(e) => handleExportJson(e, t)} title="Exportar JSON">
+                      <Download className="h-3.5 w-3.5" />
+                    </SecondaryButton>
+
                     {/* Edit */}
                     <SecondaryButton size="sm" onClick={(e) => handleEdit(e, t)} title="Edit template">
                       <Pencil className="h-3.5 w-3.5" />
@@ -203,6 +248,12 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
         confirmLabel={deleting ? 'Deleting…' : 'Delete Template'}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ImportTemplateJsonModal
+        isOpen={showJsonImportModal}
+        onClose={() => setShowJsonImportModal(false)}
+        onImport={handleImportTemplate}
       />
     </div>
   );

@@ -181,7 +181,7 @@ export function AIBuilder({ ownerEmail }: AIBuilderProps) {
       <div className="flex flex-1 flex-col overflow-hidden">
         <AIBuilderHeader currentTab={currentTab} />
 
-        <main className="flex-1 overflow-hidden">
+        <main className="flex flex-1 min-h-0 flex-col overflow-hidden">
           {currentTab === 'create' && (
             <CreatePage
               onGenerate={handleGenerateProduct}
@@ -213,6 +213,7 @@ export function AIBuilder({ ownerEmail }: AIBuilderProps) {
           {currentTab === 'product-dashboard' && activeProduct && (
             <ProductDashboardView
               product={activeProduct}
+              ownerEmail={ownerEmail ?? 'benterprisesusa@gmail.com'}
               onBack={() => setCurrentTab('products')}
               onUpdateProduct={handleUpdateProduct}
               onImproveProduct={handleImproveProduct}

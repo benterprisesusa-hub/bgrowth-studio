@@ -7,7 +7,7 @@
  * swap the config, get a different product, with no component changes.
  */
 
-export type FieldType = 'text' | 'email' | 'phone' | 'date' | 'time' | 'number' | 'select' | 'textarea';
+export type FieldType = 'text' | 'email' | 'phone' | 'date' | 'time' | 'number' | 'select' | 'textarea' | 'title' | 'static_text';
 
 export interface FieldConfig {
   id: string;

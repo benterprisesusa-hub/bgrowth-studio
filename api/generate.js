@@ -1,5 +1,40 @@
 import { GoogleGenAI } from '@google/genai';
 
+function applyChecklistBlueprint(product, blueprint, productType) {
+  const resolvedType = blueprint?.overview?.type || productType || product.structure?.productType;
+  const sections = blueprint?.structure?.checklistSections;
+
+  if (resolvedType !== 'Checklist' || !Array.isArray(sections)) {
+    return product;
+  }
+
+  const tasks = sections.map((section, sectionIndex) => ({
+    id: `chk_${sectionIndex + 1}`,
+    title: section?.title || `Section ${sectionIndex + 1}`,
+    description: section?.description || '',
+    subtasks: Array.isArray(section?.tasks)
+      ? section.tasks.map((task, taskIndex) => typeof task === 'string' ? task : task?.label || task?.title || `Task ${taskIndex + 1}`)
+      : [],
+    tips: Array.isArray(section?.tips) ? section.tips : [],
+    whyItMatters: section?.whyItMatters || '',
+    bestPractices: Array.isArray(section?.bestPractices) ? section.bestPractices : [],
+    warnings: Array.isArray(section?.warnings) ? section.warnings : [],
+    notes: section?.notes || '',
+  }));
+
+  return {
+    ...product,
+    structure: {
+      ...product.structure,
+      productType: 'Checklist',
+    },
+    content: {
+      ...product.content,
+      checklist: { tasks },
+    },
+  };
+}
+
 function generateMockProduct(prompt, productType) {
   return {
     id: `prod_${Date.now()}`, status: 'Draft', isFavorite: false,
@@ -26,7 +61,7 @@ export default async function handler(req, res) {
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
-    return res.json({ product: generateMockProduct(prompt, productType) });
+    return res.json({ product: applyChecklistBlueprint(generateMockProduct(prompt, productType), blueprint, productType) });
   }
 
   try {
@@ -37,8 +72,8 @@ export default async function handler(req, res) {
       config: { responseMimeType: 'application/json' }
     });
     const parsed = JSON.parse(response.text);
-    return res.json({ product: { ...generateMockProduct(prompt, productType), ...parsed } });
+    return res.json({ product: applyChecklistBlueprint({ ...generateMockProduct(prompt, productType), ...parsed }, blueprint, productType) });
   } catch (error) {
-    return res.json({ product: generateMockProduct(prompt, productType) });
+    return res.json({ product: applyChecklistBlueprint(generateMockProduct(prompt, productType), blueprint, productType) });
   }
 }

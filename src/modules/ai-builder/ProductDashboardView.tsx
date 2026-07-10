@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { gasSavePlanners, gasSaveCalculators } from '../../lib/studioSync';
+import { api_saveTemplate } from '../checklist-builder/api';
+import { toChecklistConfig } from './checklistAdapter';
 import {
   Sparkles,
   ArrowLeft,
@@ -36,6 +38,7 @@ import { DigitalProduct, ProductType, AICreditCost } from './types';
 
 interface ProductDashboardViewProps {
   product: DigitalProduct;
+  ownerEmail: string;
   onBack: () => void;
   onUpdateProduct: (updated: DigitalProduct) => void;
   onImproveProduct: (action: string, instruction?: string) => Promise<void>;
@@ -45,6 +48,7 @@ interface ProductDashboardViewProps {
 
 export default function ProductDashboardView({
   product,
+  ownerEmail,
   onBack,
   onUpdateProduct,
   onImproveProduct,
@@ -380,38 +384,17 @@ export default function ProductDashboardView({
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      const type = product.structure?.productType;
-                      if (type === 'Checklist') {
-                        // Convert to Checklist Builder format
-                        const checklist = {
-                          id: `ai-${product.id}`,
-                          name: product.structure?.name ?? 'AI Generated Checklist',
-                          description: product.structure?.shortDescription ?? '',
-                          primaryColor: '#1061EC',
-                          sections: (product.content?.document?.sections ?? []).map((sec: any, idx: number) => ({
-                            id: `sec-${idx}`,
-                            number: idx + 1,
-                            title: sec.heading ?? `Section ${idx + 1}`,
-                            description: sec.body ?? '',
-                            icon: 'checklist',
-                            whyItMatters: '',
-                            tip: '',
-                            optional: false,
-                            type: 'checklist',
-                            fields: (sec.tasks ?? [sec.body]).filter(Boolean).map((task: string, fidx: number) => ({
-                              id: `field-${idx}-${fidx}`,
-                              label: task,
-                              type: 'checkbox',
-                              required: false,
-                            })),
-                          })),
-                          createdAt: new Date().toISOString(),
-                          ownerEmail: 'benterprisesusa@gmail.com',
-                        };
-                        const existing = JSON.parse(localStorage.getItem('bgrowth_checklist_templates') ?? '[]');
-                        localStorage.setItem('bgrowth_checklist_templates', JSON.stringify([checklist, ...existing]));
-                        window.location.href = window.location.origin + '/?tool=checklist';
+                    onClick={async () => {
+                        const type = product.structure?.productType;
+                        if (type === 'Checklist') {
+                          const checklist = toChecklistConfig(product);
+                          await api_saveTemplate({
+                            ownerEmail,
+                            name: checklist.brand.name,
+                            configJson: JSON.stringify(checklist),
+                            status: 'Active',
+                          });
+                          window.location.href = window.location.origin + '/?tool=checklist';
                       } else if (type === 'Planner') {
                         // Convert to Planner Engine format
                         const planner = {

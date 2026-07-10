@@ -9,6 +9,7 @@ import { Plus, Save, Eye, EyeOff, Palette } from 'lucide-react';
 import { ModuleHeader } from './ModuleHeader';
 import { SectionEditor } from './SectionEditor';
 import { LivePreview } from './LivePreview';
+import { TemplateImportModal } from './TemplateImportModal';
 import { Input } from '../../components/ui/Input';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { Toast } from '../../components/Toast';
@@ -56,6 +57,7 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -63,6 +65,27 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
     setToast({ message: msg, visible: true });
     window.setTimeout(() => setToast((t) => ({ ...t, visible: false })), 2400);
   }, []);
+
+  const handleImportSection = (title: string, items: { label: string; description?: string }[]) => {
+    const newSec: DraftSection = {
+      _key: newKey(),
+      id: newKey(),
+      type: 'checklist',
+      number: draft.sections.length + 1,
+      title,
+      description: '',
+      icon: 'check-square',
+      items: items.map((item, idx) => ({
+        _key: `ki-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        id: `id-${idx}-${Math.random().toString(36).slice(2, 6)}`,
+        label: item.label,
+        description: item.description || '',
+        required: false,
+      })),
+    };
+    setDraft((d) => ({ ...d, sections: [...d.sections, newSec] }));
+    showToast('Checklist section imported successfully!');
+  };
 
   const updateSection = (index: number, updated: DraftSection) => {
     const sections = [...draft.sections];
@@ -254,6 +277,17 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
                   </button>
                 ))}
               </div>
+
+              <div className="mt-3 border-t border-navy-50 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-navy-200 bg-navy-50/50 py-2.5 text-xs font-semibold text-brand hover:bg-brand-50 hover:border-brand transition-all"
+                >
+                  <Plus className="h-4 w-4" />
+                  Quick Import from Excel/Word
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -266,6 +300,11 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
         )}
       </div>
 
+      <TemplateImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImport={handleImportSection}
+      />
       <Toast message={toast.message} visible={toast.visible} />
     </div>
   );

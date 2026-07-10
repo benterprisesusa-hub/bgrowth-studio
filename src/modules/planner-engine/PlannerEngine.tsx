@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   BookOpen, LayoutGrid, Star, Trash2, Plus,
   ChevronRight, Layers, Settings, Link, Check,
-  Copy, Edit2, Eye
+  Copy, Edit2, Eye, Download, Upload
 } from 'lucide-react';
 import { PlannerBuilder } from './PlannerBuilder';
 import { PlannerFill } from './PlannerFill';
@@ -13,7 +13,9 @@ import {
 import { PLANNER_TEMPLATES } from './configs/templates';
 import { cn } from '../../lib/utils';
 import { Toast } from '../../components/Toast';
+import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { gasGetPlanners, gasSavePlanners } from '../../lib/studioSync';
+import { ImportPlannerJsonModal } from './ImportPlannerJsonModal';
 
 type SidebarView = 'my-planners' | 'templates' | 'favorites' | 'trash';
 type ActiveScreen = 'list' | 'builder' | 'fill';
@@ -28,24 +30,67 @@ export function PlannerEngine({ ownerEmail, initialPlannerId }: PlannerEnginePro
 
   // Load from GAS on mount
   useEffect(() => {
-    gasGetPlanners(ownerEmail ?? 'benterprisesusa@gmail.com').then(gasPlanners => {
+    gasGetPlanners(ownerEmail || 'benterprisesusa@gmail.com').then(gasPlanners => {
       if (gasPlanners.length > 0) {
         setPlanners(gasPlanners);
         savePlanners(gasPlanners);
       }
     });
-  }, []);
+  }, [ownerEmail]);
+
   const [sidebarView, setSidebarView] = useState<SidebarView>('my-planners');
   const [screen, setScreen] = useState<ActiveScreen>(() => initialPlannerId ? 'fill' : 'list');
   const [activePlanner, setActivePlanner] = useState<PlannerConfig | null>(
     () => initialPlannerId ? loadPlanners().find(p => p.id === initialPlannerId) ?? null : null
   );
+
+  // Set activePlanner once fetched from GAS if it wasn't found in localStorage initially
+  useEffect(() => {
+    if (initialPlannerId && !activePlanner && planners.length > 0) {
+      const found = planners.find(p => p.id === initialPlannerId);
+      if (found) {
+        setActivePlanner(found);
+      }
+    }
+  }, [planners, initialPlannerId, activePlanner]);
+
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
+  const [showJsonImportModal, setShowJsonImportModal] = useState(false);
 
   const showToast = (msg: string) => {
     setToast({ message: msg, visible: true });
     setTimeout(() => setToast(t => ({ ...t, visible: false })), 2200);
+  };
+
+  const handleImportPlanner = (plannerData: any) => {
+    const imported = {
+      ...plannerData,
+      id: `p-${Date.now()}`,
+      isTemplate: false,
+    };
+    const updated = [imported, ...planners];
+    setPlanners(updated);
+    savePlanners(updated);
+    gasSavePlanners(ownerEmail || 'benterprisesusa@gmail.com', updated);
+    showToast('Planner importado com sucesso! 🎉');
+  };
+
+  const handleExportPlanner = (e: React.MouseEvent, p: PlannerConfig) => {
+    e.stopPropagation();
+    try {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(p, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `${p.settings.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-planner.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('JSON exportado! 📥');
+    } catch {
+      showToast('Erro ao exportar o planejador.');
+    }
   };
 
   const savePlanner = (planner: PlannerConfig) => {
@@ -54,14 +99,16 @@ export function PlannerEngine({ ownerEmail, initialPlannerId }: PlannerEnginePro
       : [...planners, planner];
     setPlanners(updated);
     savePlanners(updated);
-    gasSavePlanners(ownerEmail ?? 'benterprisesusa@gmail.com', updated);
+    gasSavePlanners(ownerEmail || 'benterprisesusa@gmail.com', updated);
   };
 
-  const deletePlanner = (id: string) => {
-    if (!confirm('Delete this planner?')) return;
-    const updated = planners.filter(p => p.id !== id);
+  const handleConfirmDelete = () => {
+    if (!deleteTargetId) return;
+    const updated = planners.filter(p => p.id !== deleteTargetId);
     setPlanners(updated);
     savePlanners(updated);
+    gasSavePlanners(ownerEmail || 'benterprisesusa@gmail.com', updated);
+    setDeleteTargetId(null);
     showToast('Planner deleted');
   };
 
@@ -97,7 +144,8 @@ export function PlannerEngine({ ownerEmail, initialPlannerId }: PlannerEnginePro
   };
 
   const handleCopyLink = (id: string) => {
-    const url = `${window.location.origin}/?planner=${id}`;
+    const emailToUse = ownerEmail || 'benterprisesusa@gmail.com';
+    const url = `${window.location.origin}/?planner=${id}&owner=${encodeURIComponent(emailToUse)}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
@@ -186,10 +234,16 @@ export function PlannerEngine({ ownerEmail, initialPlannerId }: PlannerEnginePro
             <h1 className="text-xl font-bold text-navy-900">Planner Engine</h1>
             <p className="text-sm text-navy-400">Create. Customize. Plan. Achieve.</p>
           </div>
-          <button type="button" onClick={handleNew}
-            className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">
-            <Plus className="h-4 w-4" /> Create New Planner
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setShowJsonImportModal(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-navy-200 px-4 py-2 text-sm font-semibold text-navy-700 hover:bg-navy-50">
+              <Upload className="h-4 w-4" /> Importar JSON
+            </button>
+            <button type="button" onClick={handleNew}
+              className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+              <Plus className="h-4 w-4" /> Create New Planner
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
@@ -246,11 +300,15 @@ export function PlannerEngine({ ownerEmail, initialPlannerId }: PlannerEnginePro
                             className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-brand hover:text-brand">
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
+                          <button type="button" onClick={(e) => handleExportPlanner(e, planner)} title="Exportar JSON"
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-brand hover:text-brand">
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
                           <button type="button" onClick={() => handleCopyLink(planner.id)} title="Copy link"
                             className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-brand hover:text-brand">
                             {copiedId === planner.id ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Link className="h-3.5 w-3.5" />}
                           </button>
-                          <button type="button" onClick={() => deletePlanner(planner.id)} title="Delete"
+                          <button type="button" onClick={() => setDeleteTargetId(planner.id)} title="Delete"
                             className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:border-red-200 hover:text-red-500">
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -315,6 +373,19 @@ export function PlannerEngine({ ownerEmail, initialPlannerId }: PlannerEnginePro
         </div>
       </div>
 
+      <ConfirmDialog
+        open={deleteTargetId !== null}
+        title="Delete this planner?"
+        description="This action cannot be undone. You will lose this planner's layout and configuration."
+        confirmLabel="Delete"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeleteTargetId(null)}
+      />
+      <ImportPlannerJsonModal
+        isOpen={showJsonImportModal}
+        onClose={() => setShowJsonImportModal(false)}
+        onImport={handleImportPlanner}
+      />
       <Toast message={toast.message} visible={toast.visible} />
     </div>
   );
