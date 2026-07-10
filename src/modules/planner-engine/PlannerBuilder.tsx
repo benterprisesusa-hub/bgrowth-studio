@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import {
   ArrowLeft, Save, Eye, Plus, Trash2, GripVertical,
-  Check, X, Monitor, Tablet, Smartphone
+  Check, X, Monitor, Tablet, Smartphone, ChevronUp, ChevronDown
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -26,9 +26,26 @@ type PreviewMode = 'desktop' | 'tablet' | 'mobile';
 // -----------------------------------------------------------------------
 // Sortable Block Row
 // -----------------------------------------------------------------------
-function SortableBlockRow({ block, isSelected, onSelect, onDelete, onToggle }: {
-  block: PlannerBlock; isSelected: boolean;
-  onSelect: () => void; onDelete: () => void; onToggle: () => void;
+function SortableBlockRow({
+  block,
+  isSelected,
+  onSelect,
+  onDelete,
+  onToggle,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+}: {
+  block: PlannerBlock;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  onToggle: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: block.id });
@@ -36,16 +53,36 @@ function SortableBlockRow({ block, isSelected, onSelect, onDelete, onToggle }: {
   return (
     <div ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn('flex items-center gap-2 rounded-lg border p-2 transition-all cursor-pointer text-xs',
+      className={cn('flex items-center gap-1.5 rounded-lg border p-2 transition-all cursor-pointer text-xs',
         isDragging && 'opacity-50 shadow-lg',
         isSelected ? 'border-brand bg-brand-50' : 'border-navy-100 bg-white hover:border-brand-200',
         !block.enabled && 'opacity-50')}
       onClick={onSelect}>
-      <button type="button" className="cursor-grab text-navy-300 active:cursor-grabbing"
+      <button type="button" className="cursor-grab text-navy-300 active:cursor-grabbing shrink-0"
         {...attributes} {...listeners} onClick={e => e.stopPropagation()}>
         <GripVertical className="h-3.5 w-3.5" />
       </button>
-      <span className="text-base">{block.icon}</span>
+      <div className="flex flex-col shrink-0">
+        <button
+          type="button"
+          disabled={isFirst}
+          onClick={e => { e.stopPropagation(); onMoveUp?.(); }}
+          title="Move Block Up"
+          className="text-navy-300 hover:text-navy-600 disabled:opacity-20"
+        >
+          <ChevronUp className="h-3 w-3" />
+        </button>
+        <button
+          type="button"
+          disabled={isLast}
+          onClick={e => { e.stopPropagation(); onMoveDown?.(); }}
+          title="Move Block Down"
+          className="text-navy-300 hover:text-navy-600 disabled:opacity-20"
+        >
+          <ChevronDown className="h-3 w-3" />
+        </button>
+      </div>
+      <span className="text-base shrink-0">{block.icon}</span>
       <span className="flex-1 font-medium text-navy-800 truncate">{block.title}</span>
       <button type="button" onClick={e => { e.stopPropagation(); onToggle(); }}
         className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full',
@@ -163,6 +200,28 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
   const deleteBlock = (id: string) => {
     setDraft(d => ({ ...d, blocks: d.blocks.filter(b => b.id !== id) }));
     if (selectedBlockId === id) setSelectedBlockId(null);
+  };
+
+  const moveBlockUp = (idx: number) => {
+    if (idx === 0) return;
+    setDraft(d => {
+      const blocks = [...d.blocks];
+      const temp = blocks[idx];
+      blocks[idx] = blocks[idx - 1];
+      blocks[idx - 1] = temp;
+      return { ...d, blocks };
+    });
+  };
+
+  const moveBlockDown = (idx: number) => {
+    if (idx === draft.blocks.length - 1) return;
+    setDraft(d => {
+      const blocks = [...d.blocks];
+      const temp = blocks[idx];
+      blocks[idx] = blocks[idx + 1];
+      blocks[idx + 1] = temp;
+      return { ...d, blocks };
+    });
   };
 
   const onDragEnd = (e: DragEndEvent) => {
@@ -421,12 +480,16 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
             <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
               <SortableContext items={draft.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
                 <div className="flex flex-col gap-1.5 mb-4">
-                  {draft.blocks.map(block => (
+                  {draft.blocks.map((block, idx) => (
                     <SortableBlockRow key={block.id} block={block}
                       isSelected={selectedBlockId === block.id}
                       onSelect={() => setSelectedBlockId(block.id)}
                       onDelete={() => deleteBlock(block.id)}
                       onToggle={() => updateBlock(block.id, { enabled: !block.enabled })}
+                      onMoveUp={() => moveBlockUp(idx)}
+                      onMoveDown={() => moveBlockDown(idx)}
+                      isFirst={idx === 0}
+                      isLast={idx === draft.blocks.length - 1}
                     />
                   ))}
                 </div>

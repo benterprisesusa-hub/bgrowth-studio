@@ -61,8 +61,9 @@ function calcBlockProgress(block: any, data: any): { filled: number; total: numb
       return { filled, total };
     }
     case 'form_fields': {
-      const total = cfg.fields?.length ?? 0;
-      const filled = cfg.fields?.filter((f: any) => data[f.id]).length ?? 0;
+      const activeFields = cfg.fields?.filter((f: any) => f.type !== 'title' && f.type !== 'static_text') ?? [];
+      const total = activeFields.length;
+      const filled = activeFields.filter((f: any) => data[f.id]).length;
       return { filled, total };
     }
     case 'image': return { filled: data.image ? 1 : 0, total: 1 };
@@ -382,29 +383,57 @@ function ResourcesBlockFill({ config, data, onChange }: any) {
 function FormFieldsBlockFill({ config, data, onChange }: any) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {(config.fields ?? []).map((field: any) => (
-        <div key={field.id} className={field.type === 'textarea' ? 'sm:col-span-2' : ''}>
-          <label className="mb-1.5 flex items-center gap-1 text-sm font-semibold text-navy-700">
-            {field.label}
-            {field.required && <span className="text-red-500">*</span>}
-          </label>
-          {field.type === 'textarea' ? (
-            <textarea rows={3} value={data?.[field.id] ?? ''} placeholder={field.placeholder}
-              onChange={e => onChange({ ...data, [field.id]: e.target.value })}
-              className="w-full resize-none rounded-lg border border-navy-100 p-2.5 text-sm text-navy-700 focus:border-brand focus:outline-none" />
-          ) : field.type === 'select' ? (
-            <select value={data?.[field.id] ?? ''} onChange={e => onChange({ ...data, [field.id]: e.target.value })}
-              className="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm text-navy-700 focus:border-brand focus:outline-none">
-              <option value="">Select...</option>
-              {(field.options ?? []).map((opt: string) => <option key={opt}>{opt}</option>)}
-            </select>
-          ) : (
-            <input type={field.type} value={data?.[field.id] ?? ''} placeholder={field.placeholder}
-              onChange={e => onChange({ ...data, [field.id]: e.target.value })}
-              className="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm text-navy-700 focus:border-brand focus:outline-none" />
-          )}
-        </div>
-      ))}
+      {(config.fields ?? []).map((field: any) => {
+        if (field.type === 'title') {
+          return (
+            <div key={field.id} className="sm:col-span-2 mt-4 first:mt-0 pb-1 border-b border-navy-100">
+              <h3 className="text-base font-bold text-navy-800 tracking-tight">
+                {field.label || 'Heading'}
+              </h3>
+            </div>
+          );
+        }
+
+        if (field.type === 'static_text') {
+          return (
+            <div key={field.id} className="sm:col-span-2 text-sm text-navy-600 whitespace-pre-wrap leading-relaxed bg-navy-50/50 p-3.5 rounded-xl border border-navy-100/70">
+              <p className="text-navy-600 font-normal">{field.label || 'Paragraph text...'}</p>
+            </div>
+          );
+        }
+
+        const isFullWidth = field.type === 'textarea';
+
+        return (
+          <div key={field.id} className={isFullWidth ? 'sm:col-span-2' : ''}>
+            <label className="mb-1.5 flex items-center gap-1 text-sm font-semibold text-navy-700">
+              {field.label}
+              {field.required && <span className="text-red-500">*</span>}
+            </label>
+            {field.type === 'textarea' ? (
+              <textarea rows={3} value={data?.[field.id] ?? ''} placeholder={field.placeholder}
+                onChange={e => onChange({ ...data, [field.id]: e.target.value })}
+                className="w-full resize-none rounded-lg border border-navy-100 p-2.5 text-sm text-navy-700 focus:border-brand focus:outline-none" />
+            ) : field.type === 'select' ? (
+              <select value={data?.[field.id] ?? ''} onChange={e => onChange({ ...data, [field.id]: e.target.value })}
+                className="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm text-navy-700 focus:border-brand focus:outline-none">
+                <option value="">Select...</option>
+                {(field.options ?? []).map((opt: string) => <option key={opt}>{opt}</option>)}
+              </select>
+            ) : field.type === 'checkbox' ? (
+              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg border border-navy-100 px-3 py-2 text-sm text-navy-700 hover:bg-navy-50/50">
+                <input type="checkbox" checked={!!data?.[field.id]} onChange={e => onChange({ ...data, [field.id]: e.target.checked })}
+                  className="h-4 w-4 rounded border-navy-300 text-brand focus:ring-brand accent-brand" />
+                <span>{field.placeholder || 'Check this box'}</span>
+              </label>
+            ) : (
+              <input type={field.type} value={data?.[field.id] ?? ''} placeholder={field.placeholder}
+                onChange={e => onChange({ ...data, [field.id]: e.target.value })}
+                className="w-full rounded-lg border border-navy-100 px-3 py-2 text-sm text-navy-700 focus:border-brand focus:outline-none" />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

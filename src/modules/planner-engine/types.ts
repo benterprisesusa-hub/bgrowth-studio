@@ -77,6 +77,8 @@ export interface ImageBlockConfig {
   prompt: string;
   allowUpload: boolean;
   caption: string;
+  preImage?: any;
+  preCaption?: string;
 }
 
 export interface ResourcesBlockConfig {
@@ -85,16 +87,35 @@ export interface ResourcesBlockConfig {
   allowAddItems: boolean;
 }
 
+export type FormFieldType =
+  | 'text'
+  | 'email'
+  | 'phone'
+  | 'number'
+  | 'date'
+  | 'time'
+  | 'textarea'
+  | 'select'
+  | 'checkbox'
+  | 'title'
+  | 'static_text';
+
 export interface FormFieldsBlockConfig {
   type: 'form_fields';
   fields: {
     id: string;
     label: string;
-    type: 'text' | 'number' | 'email' | 'phone' | 'date' | 'textarea' | 'select';
+    type: FormFieldType;
     placeholder?: string;
     required: boolean;
     options?: string[]; // for select type
   }[];
+  sectionTitle?: string;
+  description?: string;
+  icon?: string;
+  whyItMatters?: string;
+  tip?: string;
+  optional?: boolean;
 }
 
 export type BlockConfig =

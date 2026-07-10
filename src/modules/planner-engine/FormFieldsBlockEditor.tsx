@@ -10,10 +10,8 @@ import { GripVertical, Trash2, Plus, ChevronDown, ChevronUp, X } from 'lucide-re
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Select } from '../../components/ui/Select';
-import { newId } from './types';
+import { newId, FormFieldType } from './types';
 import { cn } from '../../lib/utils';
-
-export type FormFieldType = 'text' | 'email' | 'phone' | 'number' | 'date' | 'time' | 'textarea' | 'select' | 'checkbox';
 
 // -----------------------------------------------------------------------
 // Field type picker modal — like Wix
@@ -36,6 +34,13 @@ const FIELD_TYPE_GROUPS = [
     label: 'Selection',
     types: [
       { type: 'select' as FormFieldType, icon: '▾', label: 'Dropdown', description: 'Choose from a list of options' },
+    ],
+  },
+  {
+    label: 'Layout & Content',
+    types: [
+      { type: 'title' as FormFieldType, icon: 'H', label: 'Title', description: 'Heading for visual organization' },
+      { type: 'static_text' as FormFieldType, icon: '¶', label: 'Text Block', description: 'Static paragraph or instructions' },
     ],
   },
 ];
@@ -115,6 +120,7 @@ function FieldTypePicker({ onSelect, onClose }: { onSelect: (type: FormFieldType
 export const FIELD_TYPE_LABELS: Record<FormFieldType, string> = {
   text: 'Text', email: 'Email', phone: 'Phone', number: 'Number',
   date: 'Date', time: 'Time', textarea: 'Long Text', select: 'Dropdown', checkbox: 'Checkbox',
+  title: 'Title (Heading)', static_text: 'Text Block (Static Paragraph)',
 };
 
 export interface PlannerFormField {
@@ -145,26 +151,78 @@ function defaultField(type: FormFieldType = 'text'): PlannerFormField {
 // -----------------------------------------------------------------------
 // Sortable Field Row
 // -----------------------------------------------------------------------
-function SortableFieldRow({ field, onChange, onDelete }: {
-  field: PlannerFormField; onChange: (f: PlannerFormField) => void; onDelete: () => void;
+function SortableFieldRow({
+  field,
+  onChange,
+  onDelete,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+}: {
+  field: PlannerFormField;
+  onChange: (f: PlannerFormField) => void;
+  onDelete: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: field.id });
+
+  const isStatic = field.type === 'title' || field.type === 'static_text';
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn('rounded-xl border border-navy-100 bg-white p-3 shadow-card', isDragging && 'opacity-50 shadow-cardHover')}>
       <div className="flex flex-col gap-2.5">
         <div className="flex items-end gap-2">
-          <button type="button" className="cursor-grab pb-2 text-navy-300 hover:text-navy-500 active:cursor-grabbing"
-            {...attributes} {...listeners}>
-            <GripVertical className="h-4 w-4" />
-          </button>
-          <div className="flex-1">
-            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Field Label</label>
-            <Input value={field.label} placeholder="e.g. Client Name" onChange={e => onChange({ ...field, label: e.target.value })} />
+          <div className="flex items-center gap-0.5 shrink-0 pb-1">
+            <button type="button" className="cursor-grab p-1.5 text-navy-300 hover:text-navy-500 active:cursor-grabbing"
+              {...attributes} {...listeners}>
+              <GripVertical className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              disabled={isFirst}
+              onClick={e => { e.stopPropagation(); onMoveUp?.(); }}
+              title="Move Up"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-navy-300 hover:bg-navy-50 hover:text-navy-700 disabled:opacity-25"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              disabled={isLast}
+              onClick={e => { e.stopPropagation(); onMoveDown?.(); }}
+              title="Move Down"
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-navy-300 hover:bg-navy-50 hover:text-navy-700 disabled:opacity-25"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
           </div>
-          <div className="w-28">
+          <div className="flex-1">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">
+              {field.type === 'title' ? 'Heading Text' : field.type === 'static_text' ? 'Paragraph Text' : 'Field Label'}
+            </label>
+            {field.type === 'static_text' ? (
+              <textarea
+                rows={2}
+                className="w-full resize-y rounded-lg border border-navy-100 bg-white px-3 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+                value={field.label}
+                placeholder="Enter instructions or information paragraph text..."
+                onChange={e => onChange({ ...field, label: e.target.value })}
+              />
+            ) : (
+              <Input
+                value={field.label}
+                placeholder={field.type === 'title' ? 'Enter heading title...' : 'e.g. Client Name'}
+                onChange={e => onChange({ ...field, label: e.target.value })}
+              />
+            )}
+          </div>
+          <div className="w-28 pb-1">
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Type</label>
             <Select value={field.type} onChange={e => onChange({ ...field, type: e.target.value as FormFieldType })}>
               {(Object.entries(FIELD_TYPE_LABELS) as [FormFieldType, string][]).map(([val, label]) => (
@@ -172,26 +230,30 @@ function SortableFieldRow({ field, onChange, onDelete }: {
               ))}
             </Select>
           </div>
-          <div className="flex items-center gap-2 pb-1">
-            <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-navy-600 whitespace-nowrap">
-              <input type="checkbox" checked={!!field.required}
-                onChange={e => onChange({ ...field, required: e.target.checked })}
-                className="h-3.5 w-3.5 rounded accent-brand" />
-              Required
-            </label>
+          <div className="flex items-center gap-2 pb-1.5 shrink-0">
+            {!isStatic && (
+              <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-navy-600 whitespace-nowrap">
+                <input type="checkbox" checked={!!field.required}
+                  onChange={e => onChange({ ...field, required: e.target.checked })}
+                  className="h-3.5 w-3.5 rounded accent-brand" />
+                Required
+              </label>
+            )}
             <button type="button" onClick={onDelete}
               className="flex h-7 w-7 items-center justify-center rounded-lg text-navy-300 hover:bg-red-50 hover:text-red-500">
               <Trash2 className="h-3.5 w-3.5" />
             </button>
           </div>
         </div>
-        <div className="pl-6">
-          <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Placeholder (optional)</label>
-          <Input value={field.placeholder ?? ''} placeholder="e.g. John Smith"
-            onChange={e => onChange({ ...field, placeholder: e.target.value })} />
-        </div>
+        {!isStatic && (
+          <div className="pl-24">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Placeholder (optional)</label>
+            <Input value={field.placeholder ?? ''} placeholder="e.g. John Smith"
+              onChange={e => onChange({ ...field, placeholder: e.target.value })} />
+          </div>
+        )}
         {field.type === 'select' && (
-          <div className="pl-6">
+          <div className="pl-24">
             <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-navy-400">Options (one per line)</label>
             <textarea rows={3}
               className="w-full resize-y rounded-lg border border-navy-100 bg-white px-3 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none"
@@ -233,6 +295,24 @@ export function FormFieldsBlockEditor({ config, onChange }: FormFieldsBlockEdito
   };
 
   const deleteField = (idx: number) => onChange({ ...config, fields: config.fields.filter((_, i) => i !== idx) });
+
+  const moveFieldUp = (idx: number) => {
+    if (idx === 0) return;
+    const fields = [...config.fields];
+    const temp = fields[idx];
+    fields[idx] = fields[idx - 1];
+    fields[idx - 1] = temp;
+    onChange({ ...config, fields });
+  };
+
+  const moveFieldDown = (idx: number) => {
+    if (idx === config.fields.length - 1) return;
+    const fields = [...config.fields];
+    const temp = fields[idx];
+    fields[idx] = fields[idx + 1];
+    fields[idx + 1] = temp;
+    onChange({ ...config, fields });
+  };
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -323,7 +403,9 @@ export function FormFieldsBlockEditor({ config, onChange }: FormFieldsBlockEdito
               <div className="flex flex-col gap-2">
                 {config.fields.map((field, idx) => (
                   <SortableFieldRow key={field.id} field={field}
-                    onChange={f => updateField(idx, f)} onDelete={() => deleteField(idx)} />
+                    onChange={f => updateField(idx, f)} onDelete={() => deleteField(idx)}
+                    onMoveUp={() => moveFieldUp(idx)} onMoveDown={() => moveFieldDown(idx)}
+                    isFirst={idx === 0} isLast={idx === config.fields.length - 1} />
                 ))}
               </div>
             </SortableContext>

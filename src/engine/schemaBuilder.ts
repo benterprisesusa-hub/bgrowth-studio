@@ -34,6 +34,7 @@ function schemaForSection(section: SectionConfig): z.ZodTypeAny {
     case 'form': {
       const shape: Record<string, z.ZodTypeAny> = {};
       for (const field of section.fields) {
+        if (field.type === 'title' || field.type === 'static_text') continue;
         shape[field.id] = zodForField(field);
       }
       return z.object(shape);
@@ -61,5 +62,7 @@ export function buildZodSchema(config: ChecklistConfig) {
  *  sections and optional fields are excluded. */
 export function requiredFieldPaths(section: SectionConfig): string[] {
   if (section.optional || section.type !== 'form') return [];
-  return section.fields.filter((f) => f.required).map((f) => `${section.id}.${f.id}`);
+  return section.fields
+    .filter((f) => f.required && f.type !== 'title' && f.type !== 'static_text')
+    .map((f) => `${section.id}.${f.id}`);
 }

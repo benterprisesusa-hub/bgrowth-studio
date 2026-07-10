@@ -63,6 +63,8 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   number: 'Number',
   select: 'Dropdown',
   textarea: 'Long Text',
+  title: 'Title (Heading)',
+  static_text: 'Text (Paragraph)',
 };
 
 export const ICON_OPTIONS = [
