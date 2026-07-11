@@ -293,33 +293,24 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
               )}
             </div>
 
-            {/* Add section buttons */}
-            <div className="rounded-2xl border border-navy-100 bg-white p-4 shadow-card">
-              <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-navy-400">Add Section</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {(['form', 'checklist', 'notes', 'outcome'] as SectionType[]).map((type) => (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => addSection(type)}
-                    className="flex flex-col items-center gap-1.5 rounded-xl border border-navy-100 bg-white p-3 text-center text-xs font-semibold text-navy-600 transition-colors hover:border-brand hover:bg-brand-50 hover:text-brand"
-                  >
-                    <Plus className="h-4 w-4" />
-                    {type === 'form' ? 'Form Fields' : type === 'checklist' ? 'Checklist' : type === 'notes' ? 'Notes' : 'Outcome'}
-                  </button>
-                ))}
-              </div>
-
-              <div className="mt-3 border-t border-navy-50 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowImportModal(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-navy-200 bg-navy-50/50 py-2.5 text-xs font-semibold text-brand hover:bg-brand-50 hover:border-brand transition-all"
-                >
-                  <Plus className="h-4 w-4" />
-                  Quick Import from Excel/Word
-                </button>
-              </div>
+            {/* Add section — botão único */}
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => addSection('form')}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-brand bg-brand px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4" />
+                Add Section
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowImportModal(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-navy-200 bg-white px-4 py-2.5 text-xs font-semibold text-brand hover:bg-brand-50 hover:border-brand transition-all"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Quick Import from Excel/Word
+              </button>
             </div>
           </div>
         </div>
