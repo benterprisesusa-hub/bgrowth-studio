@@ -203,23 +203,7 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
                     onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
                   />
                 </div>
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Category</label>
-                  <select
-                    value={draft.category ?? ''}
-                    onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
-                    className="w-full rounded-xl border border-navy-100 px-3.5 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 bg-white"
-                  >
-                    <option value="">— Select category —</option>
-                    {categories.map((cat: string) => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                  {categories.length === 0 && (
-                    <p className="mt-1 text-[11px] text-amber-500">No categories yet. Add them in Settings.</p>
-                  )}
-                </div>
-                <div>
+                  <div>
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Brand Color</label>
                   <div className="flex items-center gap-2">
                     <button
