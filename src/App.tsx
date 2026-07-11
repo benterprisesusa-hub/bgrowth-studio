@@ -120,7 +120,7 @@ function PublicFillInner({ config, storageId }: { config: ChecklistConfig; stora
 
   return (
     <FormProvider {...methods}>
-      <div className="min-h-screen bg-[#f4f6fb]">
+      <div className="min-h-screen bg-[#f4f6fb] overflow-y-auto">
         <ProductHeader
           title={config.brand.name}
           onSave={() => { setIsSaving(true); saveFormData(storageId, methods.getValues()); setTimeout(() => { setIsSaving(false); showToast('Saved'); }, 350); }}
@@ -206,7 +206,7 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
   if (activeTool) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans bg-[#f4f6fb]">
       <StudioNav activeTool={activeTool} toolName={TOOL_NAMES[activeTool]} ownerEmail={ownerEmail} onHome={() => setActiveTool(null)} />
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {activeTool === 'checklist' && <ChecklistBuilderApp ownerEmail={ownerEmail} embedded />}
         {activeTool === 'planner' && <PlannerEngine ownerEmail={ownerEmail} />}
         {activeTool === 'calculator' && <CalculatorEngine ownerEmail={ownerEmail} />}
