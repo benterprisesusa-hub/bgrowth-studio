@@ -1,4 +1,4 @@
-import { Cloud, Printer, Download, RotateCcw, ChevronRight } from 'lucide-react';
+import { Cloud, Printer, Download, RotateCcw } from 'lucide-react';
 import { SecondaryButton, PrimaryButton } from './ui/Button';
 
 interface ProductHeaderProps {
@@ -24,11 +24,7 @@ export function ProductHeader({
     <header className="no-print sticky top-0 z-30 border-b border-navy-100 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-2.5">
-          <BGrowthLogo />
-          <ChevronRight className="hidden h-4 w-4 shrink-0 text-navy-200 sm:block" />
-          <h1 className="truncate text-[15px] font-semibold text-navy-800 sm:text-base">
-            {title}
-          </h1>
+          <BGrowthLogo title={title} />
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -67,17 +63,22 @@ export function ProductHeader({
   );
 }
 
-function BGrowthLogo() {
+function BGrowthLogo({ title }: { title: string }) {
   return (
-    <div className="flex shrink-0 items-center gap-2">
+    <div className="flex shrink-0 items-center gap-2.5">
       <img
         src="/logo.jpg"
-        alt="BGrowth Club"
-        className="h-8 w-8 rounded-lg object-cover"
+        alt="BGrowth"
+        className="h-8 w-8 rounded-lg object-cover shrink-0"
       />
-      <span className="text-[15px] font-bold leading-none text-navy-800">
-        BGrowth <span className="text-brand">Club</span>
-      </span>
+      <div className="min-w-0">
+        <span className="block text-[11px] font-bold leading-none tracking-widest text-brand-600 uppercase">
+          BGrowth
+        </span>
+        <h1 className="truncate text-[15px] font-semibold leading-snug text-navy-800">
+          {title}
+        </h1>
+      </div>
     </div>
   );
 }
