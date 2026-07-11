@@ -55,7 +55,7 @@ export async function api_getTemplate(templateId: string): Promise<ChecklistTemp
 }
 
 /** Create (no templateId) or update (with templateId) a template. */
-export async function api_saveTemplate(payload: {
+return gasPost({ action: 'checklist_saveTemplate', ownerEmail: payload.ownerEmail, payload: JSON.stringify(payload) });
   templateId?: string;
   ownerEmail: string;
   name: string;
