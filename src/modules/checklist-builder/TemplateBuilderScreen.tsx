@@ -14,6 +14,7 @@ import { Input } from '../../components/ui/Input';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { Toast } from '../../components/Toast';
 import { api_saveTemplate } from './api';
+import { loadSettings } from './SettingsScreen';
 import { draftToConfig, draftToConfigJson } from './draftToConfig';
 import type { BuilderDraft, DraftSection } from './builderTypes';
 import { BRAND_COLOR_PRESETS } from './builderTypes';
@@ -55,6 +56,7 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
   );
   const [showPreview, setShowPreview] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const categories = loadSettings(ownerEmail).categories ?? [];
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -203,13 +205,19 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Category</label>
-                  <input
-                    type="text"
+                  <select
                     value={draft.category ?? ''}
                     onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
-                    placeholder="e.g. Notary, Cleaning, Real Estate..."
-                    className="w-full rounded-xl border border-navy-100 px-3.5 py-2 text-sm text-navy-800 placeholder-navy-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  />
+                    className="w-full rounded-xl border border-navy-100 px-3.5 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 bg-white"
+                  >
+                    <option value="">— Select category —</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                  {categories.length === 0 && (
+                    <p className="mt-1 text-[11px] text-amber-500">No categories yet. Add them in Settings.</p>
+                  )}
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Brand Color</label>
