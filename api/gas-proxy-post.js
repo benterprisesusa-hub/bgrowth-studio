@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     // GAS aceita form-encoded no POST
     const formData = new URLSearchParams();
     for (const [key, value] of Object.entries(body)) {
-      formData.append(key, String(value));
+      formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
     }
 
     const response = await fetch(GAS_URL, {
