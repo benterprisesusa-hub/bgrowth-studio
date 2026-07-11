@@ -65,6 +65,7 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   textarea: 'Long Text',
   title: 'Title (Heading)',
   static_text: 'Text (Paragraph)',
+  checkbox: 'Checkbox',
 };
 
 export const ICON_OPTIONS = [

@@ -97,6 +97,33 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
     setDraft((d) => ({ ...d, sections: d.sections.filter((_, i) => i !== index) }));
   };
 
+  const duplicateSection = (index: number) => {
+    setDraft((d) => {
+      const sections = [...d.sections];
+      const clone = { ...sections[index], _key: `sk-${Date.now()}`, id: `id-${Date.now()}` };
+      sections.splice(index + 1, 0, clone);
+      return { ...d, sections };
+    });
+  };
+
+  const moveSectionUp = (index: number) => {
+    if (index === 0) return;
+    setDraft((d) => {
+      const sections = [...d.sections];
+      [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
+      return { ...d, sections };
+    });
+  };
+
+  const moveSectionDown = (index: number) => {
+    setDraft((d) => {
+      if (index >= d.sections.length - 1) return d;
+      const sections = [...d.sections];
+      [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
+      return { ...d, sections };
+    });
+  };
+
   const addSection = (type: SectionType) => {
     setDraft((d) => ({ ...d, sections: [...d.sections, newSection(type, d.sections.length)] }));
   };
@@ -247,6 +274,11 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
                         index={idx}
                         onChange={(updated) => updateSection(idx, updated)}
                         onDelete={() => deleteSection(idx)}
+                        onDuplicate={() => duplicateSection(idx)}
+                        onMoveUp={() => moveSectionUp(idx)}
+                        onMoveDown={() => moveSectionDown(idx)}
+                        isFirst={idx === 0}
+                        isLast={idx === draft.sections.length - 1}
                       />
                     ))}
                   </div>

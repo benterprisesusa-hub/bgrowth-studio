@@ -536,6 +536,37 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
                       const items = [...(selectedBlock.config as any).items, { id: newId(), label: 'New item', required: false }];
                       updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, items } as any });
                     }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add item</button>
+                  {/* Converter para Form Fields (permite misturar tipos de campo) */}
+                    <div className="mt-3 rounded-lg border border-dashed border-navy-200 bg-navy-50/50 p-2.5">
+                      <p className="text-[10px] text-navy-400 mb-1.5">Want to mix field types (text, image, notes)?</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const existingItems = (selectedBlock.config as any).items ?? [];
+                          const fields = existingItems.map((item: any) => ({
+                            id: item.id || newId(),
+                            type: 'checkbox' as const,
+                            label: item.label || 'Item',
+                            placeholder: '',
+                            required: item.required ?? false,
+                            options: [],
+                          }));
+                          updateBlock(selectedBlock.id, {
+                            config: {
+                              type: 'form_fields',
+                              sectionTitle: selectedBlock.title,
+                              description: selectedBlock.description,
+                              icon: selectedBlock.icon,
+                              optional: false,
+                              fields,
+                            } as any,
+                          });
+                        }}
+                        className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 hover:underline"
+                      >
+                        ＋ Convert to mixed field block
+                      </button>
+                    </div>
                   </div>
                 )}
 

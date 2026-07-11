@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { ClipboardList, Plus, ChevronRight } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { ClipboardList, Plus, ChevronRight, Pencil, Trash2, Check, X } from 'lucide-react';
 import { ModuleHeader } from './ModuleHeader';
 import { EmptyState } from './EmptyState';
 import { PrimaryButton } from '../../components/ui/Button';
-import { api_getInstances } from './api';
+import { api_getInstances, api_saveInstance } from './api';
 import { cn } from '../../lib/utils';
 import type { ChecklistInstance, ParsedTemplate } from './types';
 
@@ -24,12 +24,7 @@ function ProgressPill({ percent, status }: { percent: number; status: string }) 
         isComplete ? 'bg-success-bg text-success-DEFAULT' : 'bg-brand-50 text-brand-700'
       )}
     >
-      <span
-        className={cn(
-          'h-1.5 w-1.5 rounded-full',
-          isComplete ? 'bg-success-DEFAULT' : 'bg-brand'
-        )}
-      />
+      <span className={cn('h-1.5 w-1.5 rounded-full', isComplete ? 'bg-success-DEFAULT' : 'bg-brand')} />
       {isComplete ? 'Completed' : `${percent}%`}
     </span>
   );
@@ -39,6 +34,16 @@ export function InstancesScreen({ template, ownerEmail, onBack, onOpen, onNew }:
   const [instances, setInstances] = useState<ChecklistInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit name state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  // Delete confirmation state
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -54,6 +59,82 @@ export function InstancesScreen({ template, ownerEmail, onBack, onOpen, onNew }:
   };
 
   useEffect(() => { load(); }, [template.templateId, ownerEmail]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
+
+  const startEdit = (inst: ChecklistInstance, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(inst.instanceId);
+    setEditingName(inst.clientOrJobRef || '');
+    setConfirmDeleteId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
+  const saveEdit = async (inst: ChecklistInstance) => {
+    if (!editingName.trim()) return;
+    setSavingId(inst.instanceId);
+    try {
+      await api_saveInstance({
+        instanceId: inst.instanceId,
+        templateId: inst.templateId,
+        ownerEmail,
+        clientOrJobRef: editingName.trim(),
+        dataJson: inst.dataJson,
+        progressPercent: inst.progressPercent,
+        status: inst.status,
+      });
+      setInstances(prev =>
+        prev.map(i => i.instanceId === inst.instanceId ? { ...i, clientOrJobRef: editingName.trim() } : i)
+      );
+      setEditingId(null);
+    } catch {
+      // manter editando se falhar
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const startDelete = (instanceId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmDeleteId(instanceId);
+    setEditingId(null);
+  };
+
+  const cancelDelete = () => setConfirmDeleteId(null);
+
+  const confirmDelete = async (inst: ChecklistInstance) => {
+    setDeletingId(inst.instanceId);
+    try {
+      // Tentar via GAS — se não tiver endpoint, apenas remove localmente
+      try {
+        await api_saveInstance({
+          instanceId: inst.instanceId,
+          templateId: inst.templateId,
+          ownerEmail,
+          clientOrJobRef: inst.clientOrJobRef,
+          dataJson: inst.dataJson,
+          progressPercent: inst.progressPercent,
+          status: 'Archived',
+        });
+      } catch {
+        // ignorar se GAS não suportar
+      }
+      setInstances(prev => prev.filter(i => i.instanceId !== inst.instanceId));
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  };
 
   return (
     <div className="flex h-full flex-col">
@@ -96,33 +177,116 @@ export function InstancesScreen({ template, ownerEmail, onBack, onOpen, onNew }:
 
         {!loading && !error && instances.length > 0 && (
           <ul className="flex flex-col gap-3">
-            {instances.map((inst) => (
-              <li key={inst.instanceId}>
-                <button
-                  type="button"
-                  onClick={() => onOpen(inst)}
-                  className="flex w-full items-center gap-4 rounded-2xl border border-navy-100 bg-white p-4 text-left shadow-card transition-shadow hover:shadow-cardHover sm:p-5"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand">
-                    <ClipboardList className="h-5 w-5" />
-                  </span>
+            {instances.map((inst) => {
+              const isEditing = editingId === inst.instanceId;
+              const isConfirmingDelete = confirmDeleteId === inst.instanceId;
+              const isDeleting = deletingId === inst.instanceId;
 
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-semibold text-navy-800">
-                      {inst.clientOrJobRef || 'Unnamed fill'}
-                    </span>
-                    <span className="block text-xs text-navy-400">
-                      {new Date(inst.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </span>
+              return (
+                <li key={inst.instanceId}>
+                  <div className="flex w-full items-center gap-4 rounded-2xl border border-navy-100 bg-white p-4 text-left shadow-card sm:p-5">
 
-                  <span className="flex shrink-0 items-center gap-2">
-                    <ProgressPill percent={inst.progressPercent} status={inst.status} />
-                    <ChevronRight className="h-4 w-4 text-navy-300" />
-                  </span>
-                </button>
-              </li>
-            ))}
+                    {/* Icon */}
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand">
+                      <ClipboardList className="h-5 w-5" />
+                    </span>
+
+                    {/* Name + date */}
+                    <span className="min-w-0 flex-1">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            ref={editInputRef}
+                            value={editingName}
+                            onChange={(e) => setEditingName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveEdit(inst);
+                              if (e.key === 'Escape') cancelEdit();
+                            }}
+                            className="flex-1 rounded-lg border border-brand px-2.5 py-1 text-sm font-semibold text-navy-800 focus:outline-none focus:ring-2 focus:ring-brand/20"
+                            placeholder="Enter name..."
+                          />
+                          <button
+                            type="button"
+                            onClick={() => saveEdit(inst)}
+                            disabled={!!savingId}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand text-white hover:bg-brand-600 disabled:opacity-50"
+                          >
+                            <Check className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelEdit}
+                            className="flex h-7 w-7 items-center justify-center rounded-lg border border-navy-100 text-navy-400 hover:bg-navy-50"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : isConfirmingDelete ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-red-600">Delete this fill?</span>
+                          <button
+                            type="button"
+                            onClick={() => confirmDelete(inst)}
+                            disabled={isDeleting}
+                            className="rounded-lg bg-red-500 px-2.5 py-1 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-50"
+                          >
+                            {isDeleting ? 'Deleting...' : 'Yes, delete'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={cancelDelete}
+                            className="rounded-lg border border-navy-100 px-2.5 py-1 text-xs font-semibold text-navy-500 hover:bg-navy-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <span className="block truncate text-[15px] font-semibold text-navy-800">
+                            {inst.clientOrJobRef || 'Unnamed fill'}
+                          </span>
+                          <span className="block text-xs text-navy-400">
+                            {new Date(inst.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </>
+                      )}
+                    </span>
+
+                    {/* Actions */}
+                    {!isEditing && !isConfirmingDelete && (
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => startEdit(inst, e)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-navy-300 hover:bg-brand-50 hover:text-brand"
+                          title="Edit name"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => startDelete(inst.instanceId, e)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-navy-300 hover:bg-red-50 hover:text-red-500"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                        <ProgressPill percent={inst.progressPercent} status={inst.status} />
+                        <button
+                          type="button"
+                          onClick={() => onOpen(inst)}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-navy-300 hover:bg-navy-50 hover:text-navy-600"
+                          title="Open"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

@@ -5,7 +5,7 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { ChevronDown, ChevronUp, Trash2, Plus } from 'lucide-react';
+import { ChevronDown, ChevronUp, Trash2, Plus, Copy, MoreVertical, Pencil } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Textarea } from '../../components/ui/Textarea';
 import { Select } from '../../components/ui/Select';
@@ -36,9 +36,15 @@ interface SectionEditorProps {
   index: number;
   onChange: (updated: DraftSection) => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
-export function SectionEditor({ section, index, onChange, onDelete }: SectionEditorProps) {
+export function SectionEditor({ section, index, onChange, onDelete, onDuplicate, onMoveUp, onMoveDown, isFirst, isLast }: SectionEditorProps) {
+  const [showMenu, setShowMenu] = useState(false);
   const [open, setOpen] = useState(index === 0);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const SectionIcon = getIcon(section.icon);
@@ -55,6 +61,12 @@ export function SectionEditor({ section, index, onChange, onDelete }: SectionEdi
 
   /* ---- Fields (form sections) ---- */
   const addField = () => onChange({ ...section, fields: [...(section.fields ?? []), defaultField()] });
+  const duplicateField = (fi: number) => {
+    const fields = [...(section.fields ?? [])];
+    const clone = { ...fields[fi], _key: `fk-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, id: `id-${Date.now()}` };
+    fields.splice(fi + 1, 0, clone);
+    onChange({ ...section, fields });
+  };
   const updateField = (idx: number, f: DraftField) => {
     const fields = [...(section.fields ?? [])];
     fields[idx] = f;
@@ -75,6 +87,12 @@ export function SectionEditor({ section, index, onChange, onDelete }: SectionEdi
 
   /* ---- Items (checklist/outcome sections) ---- */
   const addItem = () => onChange({ ...section, items: [...(section.items ?? []), defaultItem()] });
+  const duplicateItem = (ii: number) => {
+    const items = [...(section.items ?? [])];
+    const clone = { ...items[ii], _key: `ki-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, id: `id-${Date.now()}` };
+    items.splice(ii + 1, 0, clone);
+    onChange({ ...section, items });
+  };
   const updateItem = (idx: number, item: DraftItem) => {
     const items = [...(section.items ?? [])];
     items[idx] = item;
@@ -115,14 +133,61 @@ export function SectionEditor({ section, index, onChange, onDelete }: SectionEdi
               {(section.type === 'checklist' || section.type === 'outcome') && ` · ${(section.items ?? []).length} item(s)`}
             </span>
           </span>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-navy-300 hover:bg-red-50 hover:text-red-500"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-          {open ? <ChevronUp className="h-4 w-4 text-navy-400" /> : <ChevronDown className="h-4 w-4 text-navy-400" />}
+          <div className="relative flex items-center gap-1 shrink-0" onClick={e => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setOpen(v => !v)}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-navy-300 hover:bg-navy-50 hover:text-navy-600"
+              title="Expand / Collapse"
+            >
+              {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowMenu(v => !v)}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-navy-300 hover:bg-navy-50 hover:text-navy-600"
+              title="More actions"
+            >
+              <MoreVertical className="h-4 w-4" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-8 z-20 min-w-[160px] rounded-xl border border-navy-100 bg-white shadow-lg py-1">
+                <button type="button" onClick={() => { setOpen(true); setShowMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand">
+                  <Pencil className="h-3.5 w-3.5" /> Rename
+                </button>
+                {onDuplicate && (
+                  <button type="button" onClick={() => { onDuplicate(); setShowMenu(false); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand">
+                    <Copy className="h-3.5 w-3.5" /> Duplicate
+                  </button>
+                )}
+                {!isFirst && onMoveUp && (
+                  <button type="button" onClick={() => { onMoveUp(); setShowMenu(false); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand">
+                    <ChevronUp className="h-3.5 w-3.5" /> Move Up
+                  </button>
+                )}
+                {!isLast && onMoveDown && (
+                  <button type="button" onClick={() => { onMoveDown(); setShowMenu(false); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand">
+                    <ChevronDown className="h-3.5 w-3.5" /> Move Down
+                  </button>
+                )}
+                {open && (
+                  <button type="button" onClick={() => { setOpen(false); setShowMenu(false); }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-navy-700 hover:bg-brand-50 hover:text-brand">
+                    <ChevronUp className="h-3.5 w-3.5" /> Collapse
+                  </button>
+                )}
+                <div className="my-1 border-t border-navy-100" />
+                <button type="button" onClick={() => { onDelete(); setShowMenu(false); }}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-50">
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              </div>
+            )}
+          </div>
         </button>
 
         {/* Expanded body */}
@@ -181,11 +246,16 @@ export function SectionEditor({ section, index, onChange, onDelete }: SectionEdi
                     <Plus className="h-3.5 w-3.5" /> Add field
                   </button>
                 </div>
+                {(section.fields ?? []).length > 0 && (
+                  <button type="button" onClick={addField} className="mb-2 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-brand/30 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand-50">
+                    <Plus className="h-3 w-3" /> Add field above
+                  </button>
+                )}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onFieldsDragEnd}>
                   <SortableContext items={(section.fields ?? []).map((f) => f._key)} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-2">
                       {(section.fields ?? []).map((field, fi) => (
-                        <FieldEditor key={field._key} field={field} onChange={(updated) => updateField(fi, updated)} onDelete={() => deleteField(fi)} />
+                        <FieldEditor key={field._key} field={field} onChange={(updated) => updateField(fi, updated)} onDelete={() => deleteField(fi)} onDuplicate={() => duplicateField(fi)} />
                       ))}
                     </div>
                   </SortableContext>
@@ -205,11 +275,16 @@ export function SectionEditor({ section, index, onChange, onDelete }: SectionEdi
                     <Plus className="h-3.5 w-3.5" /> Add item
                   </button>
                 </div>
+                {(section.items ?? []).length > 0 && (
+                  <button type="button" onClick={addItem} className="mb-2 flex w-full items-center justify-center gap-1 rounded-lg border border-dashed border-brand/30 px-2.5 py-1.5 text-[11px] font-semibold text-brand hover:bg-brand-50">
+                    <Plus className="h-3 w-3" /> Add item above
+                  </button>
+                )}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onItemsDragEnd}>
                   <SortableContext items={(section.items ?? []).map((i) => i._key)} strategy={verticalListSortingStrategy}>
                     <div className="flex flex-col gap-2">
                       {(section.items ?? []).map((item, ii) => (
-                        <ChecklistItemEditor key={item._key} item={item} onChange={(updated) => updateItem(ii, updated)} onDelete={() => deleteItem(ii)} />
+                        <ChecklistItemEditor key={item._key} item={item} onChange={(updated) => updateItem(ii, updated)} onDelete={() => deleteItem(ii)} onDuplicate={() => duplicateItem(ii)} />
                       ))}
                     </div>
                   </SortableContext>

@@ -1,4 +1,4 @@
-import { Trash2 } from 'lucide-react';
+import { Trash2, Copy } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Select } from '../../components/ui/Select';
 import { SortableRow } from './SortableRow';
@@ -11,11 +11,12 @@ interface FieldEditorProps {
   field: DraftField;
   onChange: (updated: DraftField) => void;
   onDelete: () => void;
+  onDuplicate?: () => void;
 }
 
 const FIELD_TYPES = Object.entries(FIELD_TYPE_LABELS) as [FieldType, string][];
 
-export function FieldEditor({ field, onChange, onDelete }: FieldEditorProps) {
+export function FieldEditor({ field, onChange, onDelete, onDuplicate }: FieldEditorProps) {
   const set = <K extends keyof DraftField>(key: K, val: DraftField[K]) =>
     onChange({ ...field, [key]: val });
 
@@ -71,10 +72,21 @@ export function FieldEditor({ field, onChange, onDelete }: FieldEditorProps) {
                 Required
               </label>
             )}
+            {onDuplicate && (
+              <button
+                type="button"
+                onClick={onDuplicate}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-navy-300 hover:bg-brand-50 hover:text-brand"
+                aria-label="Duplicate field"
+                title="Duplicate field"
+              >
+                <Copy className="h-4 w-4" />
+              </button>
+            )}
             <button
               type="button"
               onClick={onDelete}
-              className="ml-2 flex h-8 w-8 items-center justify-center rounded-lg text-navy-300 hover:bg-red-50 hover:text-red-500"
+              className="ml-1 flex h-8 w-8 items-center justify-center rounded-lg text-navy-300 hover:bg-red-50 hover:text-red-500"
               aria-label="Delete field"
             >
               <Trash2 className="h-4 w-4" />
@@ -108,19 +120,27 @@ export function FieldEditor({ field, onChange, onDelete }: FieldEditorProps) {
               placeholder={"Option A\nOption B\nOption C"}
               value={(field.options ?? []).join('\n')}
               onChange={(e) =>
-                set('options', e.target.value.split('\n').map((s) => s.trim()).filter(Boolean))
+                set('options', (() => {
+                const raw = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+                return [...new Set(raw)]; // remove duplicatas mantendo ordem
+              })())
               }
             />
+            {(field.options ?? []).length !== new Set(field.options ?? []).size && (
+              <p className="mt-1 text-[10px] text-amber-500 font-semibold">⚠ Duplicate options removed automatically.</p>
+            )}
           </div>
         )}
 
-        {/* Row 4: icon picker */}
-        <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
-            Field Icon
-          </label>
-          <IconPicker value={field.icon} onChange={(v) => set('icon', v)} />
-        </div>
+        {/* Row 4: icon picker — oculto para title e static_text */}
+        {field.type !== 'title' && field.type !== 'static_text' && (
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
+              Field Icon
+            </label>
+            <IconPicker value={field.icon} onChange={(v) => set('icon', v)} />
+          </div>
+        )}
       </div>
     </SortableRow>
   );

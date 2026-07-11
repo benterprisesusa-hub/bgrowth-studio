@@ -179,7 +179,7 @@ export function AIBuilder({ ownerEmail }: AIBuilderProps) {
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <AIBuilderHeader currentTab={currentTab} />
+        <AIBuilderHeader currentTab={currentTab} credits={credits} />
 
         <main className="flex flex-1 min-h-0 flex-col overflow-hidden">
           {currentTab === 'create' && (

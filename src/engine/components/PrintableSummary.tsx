@@ -83,12 +83,27 @@ function NotesBlock({ section, value }: { section: { number: number; title: stri
 export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps>(({ config, data, percent }, ref) => {
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
+  // Ler logo e nome da empresa das configurações salvas
+  const appSettings = (() => {
+    try {
+      const raw = localStorage.getItem('bgrowth.checklist-builder.settings');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })();
+  const logoUrl: string | null = appSettings?.logoUrl ?? null;
+  const companyName: string = appSettings?.companyName || config.brand.companyLabel || 'BGrowth Club';
+
   return (
     <div ref={ref} className="printable-summary bg-white p-8 text-navy-900">
       <div className="mb-6 flex items-center justify-between border-b border-navy-100 pb-4">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wide text-brand-600">{config.brand.companyLabel}</p>
-          <h1 className="text-xl font-bold text-navy-900">{config.brand.name}</h1>
+        <div className="flex items-center gap-3">
+          {logoUrl && (
+            <img src={logoUrl} alt="Logo" className="h-12 w-12 rounded-lg object-cover shrink-0" />
+          )}
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-brand-600">{companyName}</p>
+            <h1 className="text-xl font-bold text-navy-900">{config.brand.name}</h1>
+          </div>
         </div>
         <div className="text-right text-[11px] text-navy-400">
           <p>Generated {today}</p>
@@ -107,7 +122,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
       })}
 
       <p className="mt-4 text-center text-[10px] text-navy-300">
-        {config.brand.companyLabel} — {config.brand.name}
+        {companyName} — {config.brand.name}
       </p>
     </div>
   );
