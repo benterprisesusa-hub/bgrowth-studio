@@ -140,6 +140,8 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
 
   // Suggestion badge state
   const [titleApplied, setTitleApplied] = useState(false);
+  const [blueprintError, setBlueprintError] = useState<string | null>(null);
+  const PROMPT_MAX_CHARS = 1000;
 
   // Rotate suggestions index
   const [suggestionOffset, setSuggestionOffset] = useState(0);
@@ -172,11 +174,23 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
     }, 1200);
 
     try {
+      setBlueprintError(null);
+      const safePrompt = prompt.length > PROMPT_MAX_CHARS ? prompt.slice(0, PROMPT_MAX_CHARS) : prompt;
+
+      setBlueprintError(null);
+      const safePrompt = prompt.length > PROMPT_MAX_CHARS ? prompt.slice(0, PROMPT_MAX_CHARS) : prompt;
+
       const response = await fetch('/api/generate-blueprint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, productType: selectedType })
+        body: JSON.stringify({ prompt: safePrompt, productType: selectedType })
       });
+
+      if (!response.ok) {
+        throw new Error(`Erro do servidor: ${response.status}`);
+      }
+
+      if (!response.ok) throw new Error(`Erro do servidor: ${response.status}`);
       const data = await response.json();
       const bp = data.blueprint || data; // fallback: sometimes returns directly
       if (bp && bp.overview) {
@@ -199,7 +213,8 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
       }
     } catch (error) {
       console.error("Blueprint generation error:", error);
-      alert("Blueprint generation encountered an issue. Loaded safe template parameters.");
+      const msg = error instanceof Error ? error.message : 'Erro desconhecido';
+      setBlueprintError(`Não foi possível gerar o Blueprint. ${msg}. Verifique sua conexão ou tente um prompt menor.`);
     } finally {
       clearInterval(stepInterval);
       setIsGeneratingBlueprint(false);
@@ -1189,9 +1204,23 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe your digital product concept in detail... (e.g. 'Complete daily focus planner for content creators to maximize weekly growth and reach metrics.')"
-              className="w-full h-32 px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50/30 text-slate-700 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:bg-white focus:border-indigo-600 transition-all resize-none leading-relaxed"
+              maxLength={PROMPT_MAX_CHARS}
+              placeholder="Describe your digital product concept..."
+              className={`w-full h-32 px-5 py-4 rounded-2xl border bg-slate-50/30 text-slate-700 placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:bg-white transition-all resize-none leading-relaxed ${prompt.length >= PROMPT_MAX_CHARS ? 'border-amber-300 focus:border-amber-400' : 'border-slate-100 focus:border-indigo-600'}`}
             />
+            <div className="flex items-center justify-between mt-1.5 px-1">
+              <span className={`text-[10px] font-medium ${prompt.length >= PROMPT_MAX_CHARS ? 'text-amber-500' : 'text-slate-400'}`}>
+                {prompt.length >= PROMPT_MAX_CHARS
+                  ? '⚠ Limite atingido — prompts menores geram melhores resultados'
+                  : `${prompt.length} / ${PROMPT_MAX_CHARS} caracteres`}
+              </span>
+            </div>
+            {blueprintError && (
+              <div className="mt-3 flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-xs text-red-700">
+                <span className="shrink-0 mt-0.5">⚠</span>
+                <span>{blueprintError}</span>
+              </div>
+            )}
           </div>
 
           {/* Action Row */}

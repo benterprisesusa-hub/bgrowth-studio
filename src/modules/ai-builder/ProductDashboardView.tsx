@@ -139,6 +139,16 @@ export default function ProductDashboardView({
   };
 
   // Dynamic formula inputs helper for calculators
+const updateSeo = (field: string, value: string) => {
+    onUpdateProduct({ ...product, seo: { ...product.seo, [field]: value } });
+  };
+
+  const updateGuideSectionTitle = (secId: string, value: string) => {
+    const sections = (product.content.guide?.sections ?? []).map(s =>
+      s.id === secId ? { ...s, title: value } : s
+    );
+    onUpdateProduct({ ...product, content: { ...product.content, guide: { ...product.content.guide!, sections } } });
+  };
   const [calcInputs, setCalcInputs] = useState<Record<string, number>>(() => {
     const defaultVals: Record<string, number> = {};
     product.content.calculator?.inputs.forEach(input => {
@@ -661,7 +671,7 @@ export default function ProductDashboardView({
                         type="text"
                         value={sec.title}
                         className="font-bold text-slate-800 text-xs block mb-2 w-full border-b border-transparent focus:border-indigo-600 focus:outline-none pb-1"
-                        onChange={() => {}} // simulated bind
+                        onChange={(e) => updateGuideSectionTitle(sec.id, e.target.value)}
                       />
                       <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-50">
                         {sec.content}
@@ -960,7 +970,7 @@ export default function ProductDashboardView({
                     <label className="text-xs font-bold text-slate-700 block mb-1">Target Search Keyword Title</label>
                     <input
                       type="text"
-                      value={product.seo.title}
+                      onChange={(e) => updateSeo('title', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
                       onChange={() => {}}
                     />
@@ -969,7 +979,7 @@ export default function ProductDashboardView({
                     <label className="text-xs font-bold text-slate-700 block mb-1">SEO URL Slug path</label>
                     <input
                       type="text"
-                      value={product.seo.slug}
+                      onChange={(e) => updateSeo('slug', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
                       onChange={() => {}}
                     />
@@ -978,7 +988,7 @@ export default function ProductDashboardView({
                     <label className="text-xs font-bold text-slate-700 block mb-1">SEO Meta Title (Under 60 chars)</label>
                     <input
                       type="text"
-                      value={product.seo.metaTitle}
+                      onChange={(e) => updateSeo('metaTitle', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
                       onChange={() => {}}
                     />
@@ -989,7 +999,7 @@ export default function ProductDashboardView({
                   <div>
                     <label className="text-xs font-bold text-slate-700 block mb-1">SEO Meta Description</label>
                     <textarea
-                      value={product.seo.metaDescription}
+                      onChange={(e) => updateSeo('metaDescription', e.target.value)}
                       className="w-full h-16 px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50 resize-none"
                       onChange={() => {}}
                     />
@@ -998,7 +1008,7 @@ export default function ProductDashboardView({
                     <label className="text-xs font-bold text-slate-700 block mb-1">Alt image tag description</label>
                     <input
                       type="text"
-                      value={product.seo.imageAltText}
+                      onChange={(e) => updateSeo('imageAltText', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
                       onChange={() => {}}
                     />
