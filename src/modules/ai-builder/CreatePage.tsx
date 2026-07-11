@@ -143,12 +143,6 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
   const [blueprintError, setBlueprintError] = useState<string | null>(null);
   const PROMPT_MAX_CHARS = 1000;
 
-// Blueprint error state (inline, sem alert())
-  const [blueprintError, setBlueprintError] = useState<string | null>(null);
-
-  // Limite de caracteres do prompt
-  const PROMPT_MAX_CHARS = 1000;
-
   // Rotate suggestions index
   const [suggestionOffset, setSuggestionOffset] = useState(0);
 
