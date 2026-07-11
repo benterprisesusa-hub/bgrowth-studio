@@ -972,7 +972,6 @@ const updateSeo = (field: string, value: string) => {
                       type="text"
                       onChange={(e) => updateSeo('title', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
-                      onChange={() => {}}
                     />
                   </div>
                   <div>
@@ -981,7 +980,6 @@ const updateSeo = (field: string, value: string) => {
                       type="text"
                       onChange={(e) => updateSeo('slug', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
-                      onChange={() => {}}
                     />
                   </div>
                   <div>
@@ -990,7 +988,6 @@ const updateSeo = (field: string, value: string) => {
                       type="text"
                       onChange={(e) => updateSeo('metaTitle', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
-                      onChange={() => {}}
                     />
                   </div>
                 </div>
@@ -1001,7 +998,6 @@ const updateSeo = (field: string, value: string) => {
                     <textarea
                       onChange={(e) => updateSeo('metaDescription', e.target.value)}
                       className="w-full h-16 px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50 resize-none"
-                      onChange={() => {}}
                     />
                   </div>
                   <div>
@@ -1010,7 +1006,6 @@ const updateSeo = (field: string, value: string) => {
                       type="text"
                       onChange={(e) => updateSeo('imageAltText', e.target.value)}
                       className="w-full px-3.5 py-1.5 border border-slate-100 rounded-lg text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-600 bg-slate-50"
-                      onChange={() => {}}
                     />
                   </div>
                 </div>
