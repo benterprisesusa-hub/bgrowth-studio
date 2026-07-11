@@ -13,18 +13,13 @@ export default async function handler(req, res) {
 
   try {
     // GAS aceita form-encoded no POST
-    const formData = new URLSearchParams();
-    for (const [key, value] of Object.entries(body)) {
-      formData.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
-    }
-
     const response = await fetch(GAS_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
         'User-Agent': 'BGrowth-Studio-Proxy/1.0',
       },
-      body: formData.toString(),
+      body: JSON.stringify(body),
       redirect: 'follow',
     });
 
