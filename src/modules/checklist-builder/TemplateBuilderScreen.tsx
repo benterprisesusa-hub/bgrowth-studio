@@ -14,7 +14,6 @@ import { Input } from '../../components/ui/Input';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { Toast } from '../../components/Toast';
 import { api_saveTemplate } from './api';
-import { loadSettings } from './SettingsScreen';
 import { draftToConfig, draftToConfigJson } from './draftToConfig';
 import type { BuilderDraft, DraftSection } from './builderTypes';
 import { BRAND_COLOR_PRESETS } from './builderTypes';
@@ -56,7 +55,6 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
   );
   const [showPreview, setShowPreview] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const categories = loadSettings(ownerEmail).categories ?? [];
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
