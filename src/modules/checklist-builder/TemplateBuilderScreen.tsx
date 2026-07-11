@@ -147,7 +147,6 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
         templateId: draft.templateId,
         ownerEmail,
         name: draft.name,
-        category: draft.category ?? '',
         configJson: draftToConfigJson(draft),
       });
       setDraft((d) => ({ ...d, templateId: saved.templateId }));
@@ -205,23 +204,13 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
                 </div>
                 <div>
                   <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Category</label>
-                  <input
-                    type="text"
-                    value={draft.category ?? ''}
-                    onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
-                    placeholder="e.g. Notary, Cleaning, Real Estate..."
-                    className="w-full rounded-xl border border-navy-100 px-3.5 py-2 text-sm text-navy-800 placeholder-navy-400 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Category</label>
                   <select
                     value={draft.category ?? ''}
                     onChange={(e) => setDraft((d) => ({ ...d, category: e.target.value }))}
                     className="w-full rounded-xl border border-navy-100 px-3.5 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 bg-white"
                   >
                     <option value="">— Select category —</option>
-                    {categories.map((cat) => (
+                    {categories.map((cat: string) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
