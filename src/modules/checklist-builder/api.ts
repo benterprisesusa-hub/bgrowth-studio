@@ -29,11 +29,10 @@ async function gasPost<T>(params: Record<string, string>): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
-  const json = (await res.json()) as { ok: boolean; data: T; error?: string };
-  if (!json.ok) throw new Error(json.error ?? 'Unknown GAS error');
-  return json.data;
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return json as T;
 }
-
 export async function api_getTemplates(ownerEmail: string): Promise<ChecklistTemplate[]> {
   return gasGet({ action: 'checklist_getTemplates', ownerEmail });
 }
