@@ -143,6 +143,12 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
   const [blueprintError, setBlueprintError] = useState<string | null>(null);
   const PROMPT_MAX_CHARS = 1000;
 
+// Blueprint error state (inline, sem alert())
+  const [blueprintError, setBlueprintError] = useState<string | null>(null);
+
+  // Limite de caracteres do prompt
+  const PROMPT_MAX_CHARS = 1000;
+
   // Rotate suggestions index
   const [suggestionOffset, setSuggestionOffset] = useState(0);
 
@@ -174,9 +180,6 @@ export default function CreatePage({ onGenerate, isGenerating, recentProducts, o
     }, 1200);
 
     try {
-      setBlueprintError(null);
-      const safePrompt = prompt.length > PROMPT_MAX_CHARS ? prompt.slice(0, PROMPT_MAX_CHARS) : prompt;
-
       setBlueprintError(null);
       const safePrompt = prompt.length > PROMPT_MAX_CHARS ? prompt.slice(0, PROMPT_MAX_CHARS) : prompt;
 
