@@ -8,6 +8,7 @@ import { api_getTemplates, api_deleteTemplate, api_saveTemplate } from './api';
 import type { ChecklistTemplate, ParsedTemplate } from './types';
 import type { BuilderDraft } from './builderTypes';
 import { ImportTemplateJsonModal } from './ImportTemplateJsonModal';
+import { loadSettings } from './SettingsScreen';
 
 interface TemplatesScreenProps {
   ownerEmail: string;
@@ -26,6 +27,7 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
   const [showJsonImportModal, setShowJsonImportModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const categories = loadSettings('').categories ?? [];
 
   const handleImportTemplate = async (name: string, configJson: string) => {
     try {
@@ -168,6 +170,37 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
           </div>
         )}
 
+        {/* Cards de filtro por categoria */}
+        {categories.length > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedCategory('all')}
+              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                selectedCategory === 'all'
+                  ? 'border-brand bg-brand text-white shadow-sm'
+                  : 'border-navy-100 bg-white text-navy-600 hover:border-brand hover:text-brand'
+              }`}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat === selectedCategory ? 'all' : cat)}
+                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                  selectedCategory === cat
+                    ? 'border-brand bg-brand text-white shadow-sm'
+                    : 'border-navy-100 bg-white text-navy-600 hover:border-brand hover:text-brand'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Busca e filtro */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
@@ -196,6 +229,7 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
           <ul className="flex flex-col gap-3">
             {templates
               .filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()))
+              .filter(t => selectedCategory === 'all' || (t.category ?? '') === selectedCategory)
               .map((t) => (
               <li key={t.templateId}>
                 <button

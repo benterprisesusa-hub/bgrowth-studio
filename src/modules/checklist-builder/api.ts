@@ -59,6 +59,7 @@ export async function api_saveTemplate(payload: {
   templateId?: string;
   ownerEmail: string;
   name: string;
+  category?: string;
   configJson: string;
   status?: string;
 }): Promise<ChecklistTemplate> {

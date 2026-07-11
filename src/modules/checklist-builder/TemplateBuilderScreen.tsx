@@ -145,6 +145,7 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
         templateId: draft.templateId,
         ownerEmail,
         name: draft.name,
+        category: draft.category ?? '',
         configJson: draftToConfigJson(draft),
       });
       setDraft((d) => ({ ...d, templateId: saved.templateId }));

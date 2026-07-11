@@ -7,6 +7,7 @@ export interface ChecklistTemplate {
   templateId: string;
   ownerEmail: string;
   name: string;
+  category?: string;
   /** Stringified ChecklistConfig JSON as stored in Sheets. */
   configJson: string;
   status: TemplateStatus;
