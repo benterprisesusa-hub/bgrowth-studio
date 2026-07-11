@@ -144,11 +144,12 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
     setIsSaving(true);
     try {
       const saved = await api_saveTemplate({
-        templateId: draft.templateId,
-        ownerEmail,
-        name: draft.name,
-        configJson: draftToConfigJson(draft),
-      });
+  templateId: draft.templateId,
+  ownerEmail,
+  name: draft.name,
+  category: draft.category ?? '',
+  configJson: draftToConfigJson(draft),
+});
       setDraft((d) => ({ ...d, templateId: saved.templateId }));
       showToast(draft.templateId ? 'Template updated ✓' : 'Template saved ✓');
     } catch (e) {
