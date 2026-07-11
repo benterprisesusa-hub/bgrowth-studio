@@ -170,37 +170,6 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
           </div>
         )}
 
-        {/* Cards de filtro por categoria */}
-        {categories.length > 0 && (
-          <div className="mb-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory('all')}
-              className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                selectedCategory === 'all'
-                  ? 'border-brand bg-brand text-white shadow-sm'
-                  : 'border-navy-100 bg-white text-navy-600 hover:border-brand hover:text-brand'
-              }`}
-            >
-              All
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat === selectedCategory ? 'all' : cat)}
-                className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-                  selectedCategory === cat
-                    ? 'border-brand bg-brand text-white shadow-sm'
-                    : 'border-navy-100 bg-white text-navy-600 hover:border-brand hover:text-brand'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* Busca e filtro */}
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
