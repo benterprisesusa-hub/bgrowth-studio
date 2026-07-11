@@ -57,6 +57,7 @@ export function SectionEditor({ section, index, onChange, onDelete, onDuplicate,
     if (type === 'form' && !base.fields) base.fields = [defaultField()];
     if ((type === 'checklist' || type === 'outcome') && !base.items) base.items = [defaultItem()];
     onChange(base);
+    setOpen(true); // garantir que a seção abre após trocar o tipo
   };
 
   /* ---- Fields (form sections) ---- */

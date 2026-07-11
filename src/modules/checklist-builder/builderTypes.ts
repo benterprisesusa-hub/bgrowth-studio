@@ -37,6 +37,7 @@ export interface BuilderDraft {
   templateId?: string;
   name: string;
   primaryColor: string;
+  category?: string;
   sections: DraftSection[];
 }
 

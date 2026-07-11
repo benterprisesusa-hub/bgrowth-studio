@@ -31,8 +31,8 @@ export function FieldRenderer({ sectionId, field }: FieldRendererProps) {
 
   if (field.type === 'static_text') {
     return (
-      <div className="sm:col-span-2">
-        <p className="text-sm text-navy-500 leading-relaxed">{field.label}</p>
+      <div className="sm:col-span-2 pt-1">
+        <p className="text-sm text-navy-500 leading-relaxed whitespace-pre-wrap">{field.label}</p>
       </div>
     );
   }

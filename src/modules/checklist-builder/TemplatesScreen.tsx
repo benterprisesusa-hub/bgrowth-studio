@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LayoutList, Plus, Pencil, Trash2, ChevronRight, Link, Check, Upload, Download } from 'lucide-react';
+import { LayoutList, Plus, Pencil, Trash2, ChevronRight, Link, Check, Upload, Download, Search } from 'lucide-react';
 import { ModuleHeader } from './ModuleHeader';
 import { EmptyState } from './EmptyState';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
@@ -24,6 +24,8 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
   const [deleteTarget, setDeleteTarget] = useState<ChecklistTemplate | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [showJsonImportModal, setShowJsonImportModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const handleImportTemplate = async (name: string, configJson: string) => {
     try {
@@ -166,6 +168,20 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
           </div>
         )}
 
+        {/* Busca e filtro */}
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-300" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search templates..."
+              className="w-full rounded-xl border border-navy-100 bg-white py-2 pl-9 pr-3 text-sm text-navy-800 placeholder-navy-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+            />
+          </div>
+        </div>
+
         {!loading && !error && templates.length === 0 && (
           <EmptyState
             icon={<LayoutList />}
@@ -178,7 +194,9 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
 
         {!loading && !error && templates.length > 0 && (
           <ul className="flex flex-col gap-3">
-            {templates.map((t) => (
+            {templates
+              .filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()))
+              .map((t) => (
               <li key={t.templateId}>
                 <button
                   type="button"

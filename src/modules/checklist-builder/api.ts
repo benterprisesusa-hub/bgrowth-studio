@@ -30,6 +30,19 @@ async function gasGet<T>(params: Record<string, string>): Promise<T> {
   return json.data;
 }
 
+// POST para payloads grandes (salvar templates e instâncias)
+async function gasPost<T>(params: Record<string, string>): Promise<T> {
+  const endpoint = IS_DEV ? DEV_URL : '/api/gas-proxy-post';
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
+  const json = (await res.json()) as { ok: boolean; data: T; error?: string };
+  if (!json.ok) throw new Error(json.error ?? 'Unknown GAS error');
+  return json.data;
+}
+
 // -----------------------------------------------------------------------
 // Templates
 // -----------------------------------------------------------------------
@@ -49,7 +62,7 @@ export async function api_saveTemplate(payload: {
   configJson: string;
   status?: string;
 }): Promise<ChecklistTemplate> {
-  return gasGet({ action: 'checklist_saveTemplate', payload: JSON.stringify(payload) });
+  return gasPost({ action: 'checklist_saveTemplate', payload: JSON.stringify(payload) });
 }
 
 export async function api_archiveTemplate(templateId: string): Promise<{ templateId: string; status: string }> {
@@ -81,7 +94,7 @@ export async function api_saveInstance(payload: {
   progressPercent: number;
   status?: string;
 }): Promise<ChecklistInstance> {
-  return gasGet({ action: 'checklist_saveInstance', payload: JSON.stringify(payload) });
+  return gasPost({ action: 'checklist_saveInstance', payload: JSON.stringify(payload) });
 }
 
 // -----------------------------------------------------------------------

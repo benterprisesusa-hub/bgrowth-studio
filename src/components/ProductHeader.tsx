@@ -75,7 +75,7 @@ function BGrowthLogo({ title }: { title: string }) {
         <span className="block text-[11px] font-bold leading-none tracking-widest text-brand-600 uppercase">
           BGrowth
         </span>
-        <h1 className="truncate text-[15px] font-semibold leading-snug text-navy-800">
+        <h1 className="truncate text-[13px] font-semibold leading-snug text-navy-800 max-w-[200px] sm:max-w-none sm:text-[15px]">
           {title}
         </h1>
       </div>
