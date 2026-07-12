@@ -5,6 +5,7 @@ import { Textarea } from '../../components/ui/Textarea';
 import { FormField } from '../../components/ui/FormField';
 import { getIcon } from '../icons';
 import type { FieldConfig } from '../types';
+import { RichTextarea } from './RichTextarea';
 
 interface FieldRendererProps {
   sectionId: string;
@@ -32,9 +33,25 @@ export function FieldRenderer({ sectionId, field }: FieldRendererProps) {
   if (field.type === 'static_text') {
     return (
       <div className="sm:col-span-2 pt-1">
-        <p className="text-sm text-navy-500 leading-relaxed whitespace-pre-wrap">{field.label}</p>
+        <p className="text-sm text-navy-500 leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: field.label }} />
       </div>
     );
+  }
+
+  if (field.type === 'link') {
+    return (
+      <div className={field.fullWidth ? 'sm:col-span-2' : undefined}>
+        
+          href={field.placeholder ?? '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
+        >
+          🔗 {field.label || field.placeholder}
+        </a>
+      </div>
+    );
+  }
   }
 
   return (
@@ -66,12 +83,11 @@ export function FieldRenderer({ sectionId, field }: FieldRendererProps) {
           ))}
         </Select>
       ) : field.type === 'textarea' ? (
-        <Textarea
+        <RichTextarea
           id={fieldId}
           placeholder={field.placeholder}
           hasError={!!errorMessage}
-          className={field.required ? undefined : 'min-h-[44px]'}
-          {...register(path)}
+          path={path}
         />
       ) : (
         <Input
