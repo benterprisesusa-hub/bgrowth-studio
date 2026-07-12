@@ -15,7 +15,7 @@ import { buildZodSchema, requiredFieldPaths } from '../../engine/schemaBuilder';
 import { buildDefaultValues } from '../../engine/defaultValues';
 import { applyBrandTheme } from '../../engine/theme';
 import { deserializeData } from './api';
-import { downloadElementAsPdf } from '../../lib/pdf';
+import { downloadChecklistAsPdf } from '../../lib/pdf';
 import type { ChecklistInstance, ParsedTemplate } from './types';
 import type { ChecklistData } from '../../engine/types';
 import { cn } from '../../lib/utils';
@@ -94,23 +94,24 @@ export function FillScreen({ template, instance, ownerEmail, onBack }: FillScree
 
   const handlePrint = () => window.print();
 
-  const handleDownloadPdf = async () => {
-    if (!printableRef.current) {
-      console.log('REF IS NULL');
-      return;
-    }
-    console.log('ELEMENT HTML:', printableRef.current.innerHTML);
-    console.log('ELEMENT DIMENSIONS:', printableRef.current.offsetWidth, printableRef.current.offsetHeight);
+ const handleDownloadPdf = async () => {
+    const appSettings = (() => {
+      try {
+        const raw = localStorage.getItem('bgrowth.checklist-builder.settings');
+        return raw ? JSON.parse(raw) : null;
+      } catch { return null; }
+    })();
+    const companyName = appSettings?.companyName || config.brand.companyLabel || 'BGrowth Club';
+    const logoUrl = appSettings?.logoUrl ?? null;
+    const filename = `${config.brand.name.replace(/\s+/g, '-')}-${instance.clientOrJobRef?.replace(/\s+/g, '-') || instanceId}.pdf`;
     setIsGeneratingPdf(true);
     try {
-      const filename = `${config.brand.name.replace(/\s+/g, '-')}-${instance.clientOrJobRef?.replace(/\s+/g, '-') || instanceId}.pdf`;
-      await downloadElementAsPdf(printableRef.current, filename);
+      await downloadChecklistAsPdf(config, values, progress.percent, filename, companyName, logoUrl);
       showToast('PDF downloaded');
     } finally {
       setIsGeneratingPdf(false);
     }
   };
-
   const handleResetConfirm = () => {
     methods.reset(buildDefaultValues(config));
     setActiveId(config.sections[0].id);
