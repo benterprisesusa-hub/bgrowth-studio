@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
 import {
   ArrowLeft, Save, Eye, Plus, Trash2, GripVertical,
-  Check, X, Monitor, Tablet, Smartphone, ChevronUp, ChevronDown
+  ChevronUp, ChevronDown, ChevronRight, MoreVertical,
+  X, Check, Search, FileText, StickyNote, Image, Minus,
+  CheckSquare, Target, Flag, GitBranch, TrendingUp, Calendar,
+  File, Settings, Palette, Upload,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -21,151 +24,803 @@ import {
 } from './types';
 import { cn } from '../../lib/utils';
 
-type PreviewMode = 'desktop' | 'tablet' | 'mobile';
+// ─── Types ───────────────────────────────────────────────────────
+type Tab = 'builder' | 'preview' | 'fill';
+type BlockCategory = 'all' | 'content' | 'planning' | 'resources' | 'media';
 
-// -----------------------------------------------------------------------
-// Sortable Block Row
-// -----------------------------------------------------------------------
-function SortableBlockRow({
+interface PlannerSection {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  blocks: PlannerBlock[];
+  collapsed: boolean;
+}
+
+// ─── Block category map ──────────────────────────────────────────
+const BLOCK_CATEGORIES: Record<BlockType, BlockCategory> = {
+  text: 'content',
+  notes: 'content',
+  image: 'media',
+  divider: 'content',
+  checklist: 'planning',
+  goals: 'planning',
+  milestones: 'planning',
+  timeline: 'planning',
+  progress: 'planning',
+  calendar: 'planning',
+  resources: 'resources',
+  worksheet: 'content',
+  form_fields: 'content',
+};
+
+const BLOCK_ICONS: Record<BlockType, React.ReactNode> = {
+  text: <FileText className="h-4 w-4" />,
+  notes: <StickyNote className="h-4 w-4" />,
+  image: <Image className="h-4 w-4" />,
+  divider: <Minus className="h-4 w-4" />,
+  checklist: <CheckSquare className="h-4 w-4" />,
+  goals: <Target className="h-4 w-4" />,
+  milestones: <Flag className="h-4 w-4" />,
+  timeline: <GitBranch className="h-4 w-4" />,
+  progress: <TrendingUp className="h-4 w-4" />,
+  calendar: <Calendar className="h-4 w-4" />,
+  resources: <File className="h-4 w-4" />,
+  worksheet: <FileText className="h-4 w-4" />,
+  form_fields: <FileText className="h-4 w-4" />,
+};
+
+const BLOCK_DESCRIPTIONS: Record<BlockType, string> = {
+  text: 'Add titles, paragraphs and rich content',
+  notes: 'Add notes with formatting options',
+  image: 'Add images with captions',
+  divider: 'Add a divider line between sections',
+  checklist: 'Add a checklist with tasks',
+  goals: 'Define and track goals',
+  milestones: 'Add milestone items',
+  timeline: 'Visual timeline of events',
+  progress: 'Track progress and completion',
+  calendar: 'Add calendar view',
+  resources: 'Add files and documents',
+  worksheet: 'Add questions for users to answer',
+  form_fields: 'Mixed field types (text, select, etc.)',
+};
+
+// ─── Add Block Modal ─────────────────────────────────────────────
+function AddBlockModal({
+  onAdd,
+  onClose,
+}: {
+  onAdd: (type: BlockType) => void;
+  onClose: () => void;
+}) {
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState<BlockCategory>('all');
+
+  const categories: { key: BlockCategory; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'content', label: 'Content' },
+    { key: 'planning', label: 'Planning' },
+    { key: 'resources', label: 'Resources' },
+    { key: 'media', label: 'Media' },
+  ];
+
+  const filtered = (Object.entries(BLOCK_TYPE_INFO) as [BlockType, (typeof BLOCK_TYPE_INFO)[BlockType]][]).filter(
+    ([type, info]) => {
+      const matchesCategory = category === 'all' || BLOCK_CATEGORIES[type] === category;
+      const matchesSearch = !search || info.label.toLowerCase().includes(search.toLowerCase());
+      return matchesCategory && matchesSearch;
+    }
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-navy-100 px-5 py-4">
+          <h3 className="text-base font-bold text-navy-800">Add Block</h3>
+          <button type="button" onClick={onClose} className="text-navy-400 hover:text-navy-700">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="px-5 pt-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-300" />
+            <input
+              autoFocus
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search blocks..."
+              className="w-full rounded-xl border border-navy-100 py-2 pl-9 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
+            />
+          </div>
+        </div>
+
+        {/* Category tabs */}
+        <div className="flex gap-1 px-5 pt-3">
+          {categories.map(c => (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => setCategory(c.key)}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+                category === c.key
+                  ? 'bg-brand text-white'
+                  : 'text-navy-500 hover:bg-navy-50'
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Block grid */}
+        <div className="max-h-72 overflow-y-auto p-5">
+          <div className="grid grid-cols-2 gap-2">
+            {filtered.map(([type, info]) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => { onAdd(type); onClose(); }}
+                className="flex items-start gap-3 rounded-xl border border-navy-100 bg-navy-50 p-3 text-left hover:border-brand hover:bg-brand-50 transition-colors"
+              >
+                <span className="mt-0.5 text-brand">{BLOCK_ICONS[type]}</span>
+                <div>
+                  <p className="text-sm font-semibold text-navy-800">{info.label}</p>
+                  <p className="text-[11px] text-navy-400 leading-tight mt-0.5">{BLOCK_DESCRIPTIONS[type]}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          {filtered.length === 0 && (
+            <p className="py-8 text-center text-sm text-navy-400">No blocks found</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Block Row (inside section) ──────────────────────────────────
+function BlockRow({
   block,
   isSelected,
   onSelect,
   onDelete,
-  onToggle,
-  onMoveUp,
-  onMoveDown,
-  isFirst,
-  isLast,
 }: {
   block: PlannerBlock;
   isSelected: boolean;
   onSelect: () => void;
   onDelete: () => void;
-  onToggle: () => void;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  isFirst?: boolean;
-  isLast?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: block.id });
 
   return (
-    <div ref={setNodeRef}
+    <div
+      ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={cn('flex items-center gap-1.5 rounded-lg border p-2 transition-all cursor-pointer text-xs',
+      className={cn(
+        'flex items-center gap-2 rounded-lg border px-3 py-2.5 transition-all cursor-pointer',
         isDragging && 'opacity-50 shadow-lg',
-        isSelected ? 'border-brand bg-brand-50' : 'border-navy-100 bg-white hover:border-brand-200',
-        !block.enabled && 'opacity-50')}
-      onClick={onSelect}>
-      <button type="button" className="cursor-grab text-navy-300 active:cursor-grabbing shrink-0"
-        {...attributes} {...listeners} onClick={e => e.stopPropagation()}>
+        isSelected
+          ? 'border-brand bg-brand-50'
+          : 'border-navy-100 bg-white hover:border-brand/40 hover:bg-navy-50',
+        !block.enabled && 'opacity-50'
+      )}
+      onClick={onSelect}
+    >
+      <button
+        type="button"
+        className="cursor-grab text-navy-300 active:cursor-grabbing shrink-0"
+        {...attributes}
+        {...listeners}
+        onClick={e => e.stopPropagation()}
+      >
         <GripVertical className="h-3.5 w-3.5" />
       </button>
-      <div className="flex flex-col shrink-0">
-        <button
-          type="button"
-          disabled={isFirst}
-          onClick={e => { e.stopPropagation(); onMoveUp?.(); }}
-          title="Move Block Up"
-          className="text-navy-300 hover:text-navy-600 disabled:opacity-20"
-        >
-          <ChevronUp className="h-3 w-3" />
-        </button>
-        <button
-          type="button"
-          disabled={isLast}
-          onClick={e => { e.stopPropagation(); onMoveDown?.(); }}
-          title="Move Block Down"
-          className="text-navy-300 hover:text-navy-600 disabled:opacity-20"
-        >
-          <ChevronDown className="h-3 w-3" />
-        </button>
-      </div>
+
       <span className="text-base shrink-0">{block.icon}</span>
-      <span className="flex-1 font-medium text-navy-800 truncate">{block.title}</span>
-      <button type="button" onClick={e => { e.stopPropagation(); onToggle(); }}
-        className={cn('flex h-4 w-4 shrink-0 items-center justify-center rounded-full',
-          block.enabled ? 'bg-emerald-500 text-white' : 'border border-navy-200')}>
-        {block.enabled && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
-      </button>
-      <button type="button" onClick={e => { e.stopPropagation(); onDelete(); }}
-        className="text-navy-300 hover:text-red-500">
-        <Trash2 className="h-3 w-3" />
+      <span className="flex-1 text-sm font-medium text-navy-800 truncate">{block.title}</span>
+
+      <span
+        className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+        style={{ background: block.color }}
+      >
+        {BLOCK_TYPE_INFO[block.config.type]?.label ?? block.config.type}
+      </span>
+
+      <button
+        type="button"
+        onClick={e => { e.stopPropagation(); onDelete(); }}
+        className="shrink-0 text-navy-300 hover:text-red-500 transition-colors"
+      >
+        <MoreVertical className="h-4 w-4" />
       </button>
     </div>
   );
 }
 
-// -----------------------------------------------------------------------
-// Live Preview
-// -----------------------------------------------------------------------
-function PlannerPreview({ planner, previewMode }: { planner: PlannerConfig; previewMode: PreviewMode }) {
-  const enabledBlocks = planner.blocks.filter(b => b.enabled);
+// ─── Section Card ─────────────────────────────────────────────────
+function SectionCard({
+  section,
+  sectionIndex,
+  selectedBlockId,
+  onSelectBlock,
+  onDeleteBlock,
+  onAddBlock,
+  onUpdateSection,
+  onDeleteSection,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+  onReorderBlocks,
+}: {
+  section: PlannerSection;
+  sectionIndex: number;
+  selectedBlockId: string | null;
+  onSelectBlock: (id: string) => void;
+  onDeleteBlock: (id: string) => void;
+  onAddBlock: (sectionId: string) => void;
+  onUpdateSection: (partial: Partial<PlannerSection>) => void;
+  onDeleteSection: () => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isFirst: boolean;
+  isLast: boolean;
+  onReorderBlocks: (from: number, to: number) => void;
+}) {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  const onDragEnd = (e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const from = section.blocks.findIndex(b => b.id === active.id);
+    const to = section.blocks.findIndex(b => b.id === over.id);
+    onReorderBlocks(from, to);
+  };
+
   return (
-    <div className={cn('mx-auto overflow-hidden rounded-2xl border border-navy-100 bg-white shadow-cardHover transition-all',
-      previewMode === 'desktop' && 'w-full',
-      previewMode === 'tablet' && 'max-w-[500px]',
-      previewMode === 'mobile' && 'max-w-[280px]')}>
-      {/* Cover */}
-      <div className="relative flex min-h-[100px] items-end p-4"
-        style={{ background: `linear-gradient(135deg, ${planner.settings.primaryColor}, ${planner.settings.accentColor})` }}>
-        {planner.settings.coverImage && (
-          <img src={planner.settings.coverImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20" />
+    <div className="rounded-2xl border border-navy-100 bg-white shadow-card overflow-hidden">
+      {/* Section header */}
+      <div className="flex items-center gap-3 border-b border-navy-100 px-4 py-3">
+        <div className="flex flex-col shrink-0">
+          <button type="button" disabled={isFirst} onClick={onMoveUp} className="text-navy-300 hover:text-navy-600 disabled:opacity-20">
+            <ChevronUp className="h-3.5 w-3.5" />
+          </button>
+          <button type="button" disabled={isLast} onClick={onMoveDown} className="text-navy-300 hover:text-navy-600 disabled:opacity-20">
+            <ChevronDown className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-base">
+          {section.icon}
+        </span>
+
+        <div className="flex-1 min-w-0">
+          <input
+            type="text"
+            value={section.title}
+            onChange={e => onUpdateSection({ title: e.target.value })}
+            placeholder="Section title"
+            className="w-full text-sm font-bold text-navy-800 bg-transparent focus:outline-none placeholder-navy-300"
+          />
+          <p className="text-[11px] text-navy-400">{section.blocks.length} block{section.blocks.length !== 1 ? 's' : ''}</p>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => onUpdateSection({ collapsed: !section.collapsed })}
+            className="rounded-lg p-1 text-navy-400 hover:bg-navy-50 hover:text-navy-700"
+          >
+            <ChevronRight className={cn('h-4 w-4 transition-transform', !section.collapsed && 'rotate-90')} />
+          </button>
+          <button
+            type="button"
+            onClick={onDeleteSection}
+            className="rounded-lg p-1 text-navy-300 hover:bg-red-50 hover:text-red-500"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Blocks */}
+      {!section.collapsed && (
+        <div className="p-3">
+          {section.blocks.length > 0 ? (
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToVerticalAxis]}
+              onDragEnd={onDragEnd}
+            >
+              <SortableContext items={section.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                <div className="flex flex-col gap-1.5 mb-3">
+                  {section.blocks.map(block => (
+                    <BlockRow
+                      key={block.id}
+                      block={block}
+                      isSelected={selectedBlockId === block.id}
+                      onSelect={() => onSelectBlock(block.id)}
+                      onDelete={() => onDeleteBlock(block.id)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <p className="mb-3 py-4 text-center text-xs text-navy-300">No blocks yet</p>
+          )}
+
+          {/* Add block button */}
+          <button
+            type="button"
+            onClick={() => onAddBlock(section.id)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-navy-200 py-2 text-xs font-semibold text-navy-500 hover:border-brand hover:bg-brand-50 hover:text-brand transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Block Here
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Block Editor Panel ───────────────────────────────────────────
+function BlockEditorPanel({
+  block,
+  onUpdate,
+  onClose,
+}: {
+  block: PlannerBlock;
+  onUpdate: (partial: Partial<PlannerBlock>) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-navy-100 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">{block.icon}</span>
+          <p className="text-sm font-bold text-navy-800">Edit Block</p>
+        </div>
+        <button type="button" onClick={onClose} className="text-navy-400 hover:text-navy-700">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Title</label>
+            <Input value={block.title} onChange={e => onUpdate({ title: e.target.value })} />
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Description</label>
+            <Input value={block.description} onChange={e => onUpdate({ description: e.target.value })} />
+          </div>
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Icon</label>
+            <Input value={block.icon} maxLength={4} onChange={e => onUpdate({ icon: e.target.value })} />
+          </div>
+
+          {/* Checklist items */}
+          {block.config.type === 'checklist' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Items</label>
+              {(block.config as any).items.map((item: any, idx: number) => (
+                <div key={item.id} className="flex items-center gap-1.5 mb-1.5">
+                  <Input value={item.label} onChange={e => {
+                    const items = [...(block.config as any).items];
+                    items[idx] = { ...item, label: e.target.value };
+                    onUpdate({ config: { ...block.config, items } as any });
+                  }} />
+                  <button type="button" onClick={() => {
+                    const items = (block.config as any).items.filter((_: any, i: number) => i !== idx);
+                    onUpdate({ config: { ...block.config, items } as any });
+                  }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const items = [...(block.config as any).items, { id: newId(), label: 'New item', required: false }];
+                onUpdate({ config: { ...block.config, items } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add item</button>
+            </div>
+          )}
+
+          {/* Goals */}
+          {block.config.type === 'goals' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Goals</label>
+              {(block.config as any).goals.map((goal: any, idx: number) => (
+                <div key={goal.id} className="flex items-center gap-1.5 mb-1.5">
+                  <Input value={goal.label} onChange={e => {
+                    const goals = [...(block.config as any).goals];
+                    goals[idx] = { ...goal, label: e.target.value };
+                    onUpdate({ config: { ...block.config, goals } as any });
+                  }} />
+                  <button type="button" onClick={() => {
+                    const goals = (block.config as any).goals.filter((_: any, i: number) => i !== idx);
+                    onUpdate({ config: { ...block.config, goals } as any });
+                  }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const goals = [...(block.config as any).goals, { id: newId(), label: 'New Goal', placeholder: '' }];
+                onUpdate({ config: { ...block.config, goals } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add goal</button>
+            </div>
+          )}
+
+          {/* Notes */}
+          {block.config.type === 'notes' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Placeholder</label>
+              <Input value={(block.config as any).placeholder}
+                onChange={e => onUpdate({ config: { ...block.config, placeholder: e.target.value } as any })} />
+            </div>
+          )}
+
+          {/* Progress */}
+          {block.config.type === 'progress' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Habits</label>
+              {(block.config as any).habits.map((habit: any, idx: number) => (
+                <div key={habit.id} className="flex items-center gap-1.5 mb-1.5">
+                  <Input value={habit.label} onChange={e => {
+                    const habits = [...(block.config as any).habits];
+                    habits[idx] = { ...habit, label: e.target.value };
+                    onUpdate({ config: { ...block.config, habits } as any });
+                  }} />
+                  <button type="button" onClick={() => {
+                    const habits = (block.config as any).habits.filter((_: any, i: number) => i !== idx);
+                    onUpdate({ config: { ...block.config, habits } as any });
+                  }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const habits = [...(block.config as any).habits, { id: newId(), label: 'New Habit', color: '#1061EC' }];
+                onUpdate({ config: { ...block.config, habits } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add habit</button>
+            </div>
+          )}
+
+          {/* Resources */}
+          {block.config.type === 'resources' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Resources</label>
+              {(block.config as any).resources.map((res: any, idx: number) => (
+                <div key={res.id} className="mb-2 rounded-lg border border-navy-100 bg-navy-50 p-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Input value={res.label} placeholder="Label" onChange={e => {
+                      const resources = [...(block.config as any).resources];
+                      resources[idx] = { ...res, label: e.target.value };
+                      onUpdate({ config: { ...block.config, resources } as any });
+                    }} />
+                    <button type="button" onClick={() => {
+                      const resources = (block.config as any).resources.filter((_: any, i: number) => i !== idx);
+                      onUpdate({ config: { ...block.config, resources } as any });
+                    }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                  <Input value={res.url ?? ''} placeholder="https://..." onChange={e => {
+                    const resources = [...(block.config as any).resources];
+                    resources[idx] = { ...res, url: e.target.value };
+                    onUpdate({ config: { ...block.config, resources } as any });
+                  }} />
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const resources = [...(block.config as any).resources, { id: newId(), label: 'New Resource', url: '' }];
+                onUpdate({ config: { ...block.config, resources } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add resource</button>
+            </div>
+          )}
+
+          {/* Milestones */}
+          {block.config.type === 'milestones' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Milestones</label>
+              {(block.config as any).milestones.map((m: any, idx: number) => (
+                <div key={m.id} className="flex items-center gap-1.5 mb-1.5">
+                  <Input value={m.label} onChange={e => {
+                    const milestones = [...(block.config as any).milestones];
+                    milestones[idx] = { ...m, label: e.target.value };
+                    onUpdate({ config: { ...block.config, milestones } as any });
+                  }} />
+                  <button type="button" onClick={() => {
+                    const milestones = (block.config as any).milestones.filter((_: any, i: number) => i !== idx);
+                    onUpdate({ config: { ...block.config, milestones } as any });
+                  }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const milestones = [...(block.config as any).milestones, { id: newId(), label: 'New Milestone', placeholder: '' }];
+                onUpdate({ config: { ...block.config, milestones } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add milestone</button>
+            </div>
+          )}
+
+          {/* Timeline */}
+          {block.config.type === 'timeline' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Events</label>
+              {(block.config as any).events.map((ev: any, idx: number) => (
+                <div key={ev.id} className="flex items-center gap-1.5 mb-1.5">
+                  <Input value={ev.label} onChange={e => {
+                    const events = [...(block.config as any).events];
+                    events[idx] = { ...ev, label: e.target.value };
+                    onUpdate({ config: { ...block.config, events } as any });
+                  }} />
+                  <button type="button" onClick={() => {
+                    const events = (block.config as any).events.filter((_: any, i: number) => i !== idx);
+                    onUpdate({ config: { ...block.config, events } as any });
+                  }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const events = [...(block.config as any).events, { id: newId(), label: 'New Event', placeholder: '' }];
+                onUpdate({ config: { ...block.config, events } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add event</button>
+            </div>
+          )}
+
+          {/* Worksheet */}
+          {block.config.type === 'worksheet' && (
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Questions</label>
+              {(block.config as any).questions.map((q: any, idx: number) => (
+                <div key={q.id} className="flex items-center gap-1.5 mb-1.5">
+                  <Input value={q.question} onChange={e => {
+                    const questions = [...(block.config as any).questions];
+                    questions[idx] = { ...q, question: e.target.value };
+                    onUpdate({ config: { ...block.config, questions } as any });
+                  }} />
+                  <button type="button" onClick={() => {
+                    const questions = (block.config as any).questions.filter((_: any, i: number) => i !== idx);
+                    onUpdate({ config: { ...block.config, questions } as any });
+                  }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const questions = [...(block.config as any).questions, { id: newId(), question: 'New Question', type: 'textarea', placeholder: '' }];
+                onUpdate({ config: { ...block.config, questions } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add question</button>
+            </div>
+          )}
+
+          {/* Image */}
+          {block.config.type === 'image' && (
+            <div className="flex flex-col gap-2">
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Caption</label>
+              <Input value={(block.config as any).preCaption ?? ''} placeholder="Image caption..."
+                onChange={e => onUpdate({ config: { ...block.config, preCaption: e.target.value } as any })} />
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Upload Prompt</label>
+              <Input value={(block.config as any).prompt ?? ''} placeholder="Upload your inspiration..."
+                onChange={e => onUpdate({ config: { ...block.config, prompt: e.target.value } as any })} />
+            </div>
+          )}
+
+          {/* Form Fields */}
+          {block.config.type === 'form_fields' && (
+            <FormFieldsBlockEditor
+              config={block.config as unknown as FormFieldsConfig}
+              onChange={cfg => onUpdate({ config: cfg as any })}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Settings Panel ───────────────────────────────────────────────
+function SettingsPanel({
+  settings,
+  onUpdate,
+  fileRef,
+  onCoverUpload,
+}: {
+  settings: PlannerConfig['settings'];
+  onUpdate: (partial: Partial<PlannerConfig['settings']>) => void;
+  fileRef: React.RefObject<HTMLInputElement>;
+  onCoverUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  const [openSections, setOpenSections] = useState({ basic: true, branding: false, advanced: false, export: false });
+  const toggle = (key: keyof typeof openSections) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
+
+  return (
+    <div className="flex flex-col gap-0">
+      {/* Basic Information */}
+      <div className="border-b border-navy-100">
+        <button type="button" onClick={() => toggle('basic')}
+          className="flex w-full items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-wider text-navy-500 hover:bg-navy-50">
+          Basic Information
+          <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', openSections.basic && 'rotate-90')} />
+        </button>
+        {openSections.basic && (
+          <div className="flex flex-col gap-3 px-4 pb-4">
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold text-navy-500">Planner Name</label>
+              <Input value={settings.name} placeholder="My Planner" onChange={e => onUpdate({ name: e.target.value })} />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold text-navy-500">Description</label>
+              <Textarea rows={2} value={settings.description} placeholder="What will users achieve?" onChange={e => onUpdate({ description: e.target.value })} />
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold text-navy-500">Category</label>
+              <Select value={settings.category} onChange={e => onUpdate({ category: e.target.value as any })}>
+                {PLANNER_CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold text-navy-500">Difficulty</label>
+                <Select value={settings.difficulty} onChange={e => onUpdate({ difficulty: e.target.value as any })}>
+                  {['Beginner', 'Intermediate', 'Advanced'].map(d => <option key={d}>{d}</option>)}
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1 block text-[11px] font-semibold text-navy-500">Language</label>
+                <Select value={settings.language} onChange={e => onUpdate({ language: e.target.value as any })}>
+                  {['English', 'Portuguese', 'Spanish'].map(l => <option key={l}>{l}</option>)}
+                </Select>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold text-navy-500">Estimated Time</label>
+              <Input value={settings.estimatedDuration} placeholder="30 minutes/day" onChange={e => onUpdate({ estimatedDuration: e.target.value })} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Branding */}
+      <div className="border-b border-navy-100">
+        <button type="button" onClick={() => toggle('branding')}
+          className="flex w-full items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-wider text-navy-500 hover:bg-navy-50">
+          Branding
+          <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', openSections.branding && 'rotate-90')} />
+        </button>
+        {openSections.branding && (
+          <div className="flex flex-col gap-3 px-4 pb-4">
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold text-navy-500">Icon (emoji)</label>
+              <Input value={settings.icon} maxLength={4} onChange={e => onUpdate({ icon: e.target.value })} />
+            </div>
+            <div>
+              <label className="mb-2 block text-[11px] font-semibold text-navy-500">Theme Color</label>
+              <div className="flex flex-wrap gap-1.5">
+                {THEME_COLORS.map(color => (
+                  <button key={color} type="button" onClick={() => onUpdate({ primaryColor: color })}
+                    className={cn('h-6 w-6 rounded-full border-2 transition-transform hover:scale-110',
+                      settings.primaryColor === color ? 'border-navy-800 scale-110' : 'border-white shadow')}
+                    style={{ background: color }} />
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-semibold text-navy-500">Cover Image</label>
+              {settings.coverImage ? (
+                <div className="relative">
+                  <img src={settings.coverImage} alt="Cover" className="h-24 w-full rounded-lg object-cover" />
+                  <button type="button" onClick={() => onUpdate({ coverImage: null })}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow">
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ) : (
+                <div onClick={() => fileRef.current?.click()}
+                  className="flex h-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100">
+                  <p className="flex items-center gap-1.5 text-xs text-navy-400"><Upload className="h-3.5 w-3.5" /> Upload cover</p>
+                </div>
+              )}
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onCoverUpload} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Export & Share */}
+      <div className="border-b border-navy-100">
+        <button type="button" onClick={() => toggle('export')}
+          className="flex w-full items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-wider text-navy-500 hover:bg-navy-50">
+          Export & Share
+          <ChevronRight className={cn('h-3.5 w-3.5 transition-transform', openSections.export && 'rotate-90')} />
+        </button>
+        {openSections.export && (
+          <div className="flex flex-col gap-2 px-4 pb-4">
+            <div className="grid grid-cols-2 gap-2 mb-1">
+              <div>
+                <label className="mb-1 block text-[10px] font-semibold text-navy-400">Page Size</label>
+                <Select value={settings.pageSize} onChange={e => onUpdate({ pageSize: e.target.value as any })}>
+                  {['A4', 'Letter', 'A5'].map(s => <option key={s}>{s}</option>)}
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1 block text-[10px] font-semibold text-navy-400">Orientation</label>
+                <Select value={settings.pageOrientation} onChange={e => onUpdate({ pageOrientation: e.target.value as any })}>
+                  <option value="portrait">Portrait</option>
+                  <option value="landscape">Landscape</option>
+                </Select>
+              </div>
+            </div>
+            {[
+              { key: 'exportPdf' as const, label: 'PDF Export' },
+              { key: 'exportPrint' as const, label: 'Print' },
+              { key: 'allowShare' as const, label: 'Share Link' },
+            ].map(opt => (
+              <label key={opt.key} className="flex cursor-pointer items-center gap-2 text-xs text-navy-700">
+                <input type="checkbox" checked={settings[opt.key] as boolean}
+                  onChange={e => onUpdate({ [opt.key]: e.target.checked })}
+                  className="h-3.5 w-3.5 rounded accent-brand" />
+                {opt.label}
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Cover Preview ────────────────────────────────────────────────
+function CoverPreview({ settings, totalBlocks, totalSections }: {
+  settings: PlannerConfig['settings'];
+  totalBlocks: number;
+  totalSections: number;
+}) {
+  return (
+    <div className="rounded-2xl overflow-hidden border border-navy-100 shadow-card mb-4">
+      <div
+        className="relative flex min-h-[140px] items-end p-5"
+        style={{ background: `linear-gradient(135deg, ${settings.primaryColor}dd, ${settings.primaryColor}88)` }}
+      >
+        {settings.coverImage && (
+          <img src={settings.coverImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />
         )}
         <div className="relative z-10">
-          <span className="text-2xl">{planner.settings.icon}</span>
-          <h2 className="mt-1 text-base font-extrabold text-white leading-tight">
-            {planner.settings.name || 'Your Planner Name'}
+          <span className="text-3xl">{settings.icon}</span>
+          <h2 className="mt-1 text-xl font-extrabold text-white leading-tight">
+            {settings.name || 'Your Planner Name'}
           </h2>
-          {planner.settings.description && (
-            <p className="mt-0.5 text-[10px] text-white/70 line-clamp-2">{planner.settings.description}</p>
+          {settings.description && (
+            <p className="mt-1 text-sm text-white/80 line-clamp-2">{settings.description}</p>
           )}
-          <div className="mt-1 flex flex-wrap gap-1">
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[9px] text-white">{planner.settings.category}</span>
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[9px] text-white">{planner.settings.difficulty}</span>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white">{settings.category}</span>
+            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white">Difficulty: {settings.difficulty}</span>
+            <span className="rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-semibold text-white">⏱ {settings.estimatedDuration}</span>
           </div>
         </div>
       </div>
 
-      {/* Blocks list */}
-      <div className="p-3">
-        {enabledBlocks.length === 0 ? (
-          <p className="py-4 text-center text-xs text-navy-300">Add blocks to see your planner</p>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            {enabledBlocks.slice(0, 8).map((block, i) => (
-              <div key={block.id} className="flex items-center gap-2 rounded-lg border border-navy-50 px-2.5 py-2">
-                <span className="text-sm">{block.icon}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[11px] font-semibold text-navy-800 truncate">{block.title}</p>
-                  <p className="text-[9px] text-navy-400 truncate">{block.description}</p>
-                </div>
-                <span className="text-[9px] font-bold rounded-full px-1.5 py-0.5 text-white"
-                  style={{ background: block.color }}>{BLOCK_TYPE_INFO[block.config.type].label.slice(0, 4)}</span>
-              </div>
-            ))}
-            {enabledBlocks.length > 8 && (
-              <p className="text-center text-[10px] text-navy-400">+{enabledBlocks.length - 8} more blocks</p>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Stats */}
-      <div className="border-t border-navy-50 px-3 py-2 flex items-center justify-between">
-        <span className="text-[10px] text-navy-400">{enabledBlocks.length} blocks</span>
-        <span className="text-[10px] text-navy-400">{planner.settings.estimatedDuration}</span>
-        <span className="rounded-full px-2 py-0.5 text-[9px] font-bold text-white"
-          style={{ background: planner.settings.primaryColor }}>Open Planner</span>
+      <div className="grid grid-cols-4 divide-x divide-navy-100 border-t border-navy-100 bg-white">
+        {[
+          { label: 'Sections', value: totalSections },
+          { label: 'Blocks', value: totalBlocks },
+          { label: 'Est. Time', value: settings.estimatedDuration.split('/')[0] },
+          { label: 'Language', value: settings.language.slice(0, 3) },
+        ].map(s => (
+          <div key={s.label} className="flex flex-col items-center py-3">
+            <p className="text-base font-extrabold text-brand">{s.value}</p>
+            <p className="text-[10px] text-navy-400">{s.label}</p>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-// -----------------------------------------------------------------------
-// Main Builder — 3 columns
-// -----------------------------------------------------------------------
+// ─── Main Builder ─────────────────────────────────────────────────
 interface PlannerBuilderProps {
   planner: PlannerConfig;
   onSave: (planner: PlannerConfig) => void;
@@ -173,69 +828,115 @@ interface PlannerBuilderProps {
   onPreview: () => void;
 }
 
+function newSection(): PlannerSection {
+  return {
+    id: newId(),
+    title: 'New Section',
+    description: '',
+    icon: '📋',
+    blocks: [],
+    collapsed: false,
+  };
+}
+
+// Convert flat blocks to sections (for migration from old format)
+function migrateToSections(planner: PlannerConfig): PlannerSection[] {
+  // If already has sections (new format), return as-is
+  if ((planner as any).sections?.length > 0) return (planner as any).sections;
+  // Migrate old flat blocks into a single default section
+  if (planner.blocks?.length > 0) {
+    return [{
+      id: newId(),
+      title: 'Main Content',
+      description: '',
+      icon: '📋',
+      blocks: planner.blocks,
+      collapsed: false,
+    }];
+  }
+  return [];
+}
+
 export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBuilderProps) {
   const [draft, setDraft] = useState<PlannerConfig>({ ...planner, settings: { ...planner.settings } });
+  const [sections, setSections] = useState<PlannerSection[]>(() => migrateToSections(planner));
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [showAddBlock, setShowAddBlock] = useState(false);
-  const [previewMode, setPreviewMode] = useState<PreviewMode>('desktop');
+  const [selectedBlockSectionId, setSelectedBlockSectionId] = useState<string | null>(null);
+  const [addBlockSectionId, setAddBlockSectionId] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('builder');
   const fileRef = useRef<HTMLInputElement>(null);
-
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const updateSettings = (partial: Partial<typeof draft.settings>) => {
     setDraft(d => ({ ...d, settings: { ...d.settings, ...partial }, updatedAt: new Date().toISOString() }));
   };
 
-  const updateBlock = (id: string, partial: Partial<PlannerBlock>) => {
-    setDraft(d => ({ ...d, blocks: d.blocks.map(b => b.id === id ? { ...b, ...partial } : b) }));
+  const addSection = () => {
+    setSections(s => [...s, newSection()]);
   };
 
-  const addBlock = (type: BlockType) => {
-    const block = defaultBlock(type);
-    setDraft(d => ({ ...d, blocks: [...d.blocks, block] }));
-    setSelectedBlockId(block.id);
-    setShowAddBlock(false);
+  const deleteSection = (sectionId: string) => {
+    setSections(s => s.filter(sec => sec.id !== sectionId));
   };
 
-  const deleteBlock = (id: string) => {
-    setDraft(d => ({ ...d, blocks: d.blocks.filter(b => b.id !== id) }));
-    if (selectedBlockId === id) setSelectedBlockId(null);
+  const updateSection = (sectionId: string, partial: Partial<PlannerSection>) => {
+    setSections(s => s.map(sec => sec.id === sectionId ? { ...sec, ...partial } : sec));
   };
 
-  const moveBlockUp = (idx: number) => {
+  const moveSectionUp = (idx: number) => {
     if (idx === 0) return;
-    setDraft(d => {
-      const blocks = [...d.blocks];
-      const temp = blocks[idx];
-      blocks[idx] = blocks[idx - 1];
-      blocks[idx - 1] = temp;
-      return { ...d, blocks };
+    setSections(s => {
+      const arr = [...s];
+      [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]];
+      return arr;
     });
   };
 
-  const moveBlockDown = (idx: number) => {
-    if (idx === draft.blocks.length - 1) return;
-    setDraft(d => {
-      const blocks = [...d.blocks];
-      const temp = blocks[idx];
-      blocks[idx] = blocks[idx + 1];
-      blocks[idx + 1] = temp;
-      return { ...d, blocks };
+  const moveSectionDown = (idx: number) => {
+    setSections(s => {
+      if (idx >= s.length - 1) return s;
+      const arr = [...s];
+      [arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]];
+      return arr;
     });
   };
 
-  const onDragEnd = (e: DragEndEvent) => {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    const from = draft.blocks.findIndex(b => b.id === active.id);
-    const to = draft.blocks.findIndex(b => b.id === over.id);
-    setDraft(d => ({ ...d, blocks: arrayMove(d.blocks, from, to) }));
+  const addBlock = (sectionId: string, type: BlockType) => {
+    const block = defaultBlock(type);
+    setSections(s => s.map(sec =>
+      sec.id === sectionId ? { ...sec, blocks: [...sec.blocks, block] } : sec
+    ));
+    setSelectedBlockId(block.id);
+    setSelectedBlockSectionId(sectionId);
+    setAddBlockSectionId(null);
+  };
+
+  const deleteBlock = (sectionId: string, blockId: string) => {
+    setSections(s => s.map(sec =>
+      sec.id === sectionId ? { ...sec, blocks: sec.blocks.filter(b => b.id !== blockId) } : sec
+    ));
+    if (selectedBlockId === blockId) {
+      setSelectedBlockId(null);
+      setSelectedBlockSectionId(null);
+    }
+  };
+
+  const updateBlock = (sectionId: string, blockId: string, partial: Partial<PlannerBlock>) => {
+    setSections(s => s.map(sec =>
+      sec.id === sectionId
+        ? { ...sec, blocks: sec.blocks.map(b => b.id === blockId ? { ...b, ...partial } : b) }
+        : sec
+    ));
+  };
+
+  const reorderBlocks = (sectionId: string, from: number, to: number) => {
+    setSections(s => s.map(sec =>
+      sec.id === sectionId ? { ...sec, blocks: arrayMove(sec.blocks, from, to) } : sec
+    ));
   };
 
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // Compress image before saving to avoid localStorage size limits
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
@@ -252,32 +953,57 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
     img.src = url;
   };
 
-  const selectedBlock = draft.blocks.find(b => b.id === selectedBlockId);
+  const handleSave = (publishStatus: 'draft' | 'published') => {
+    const allBlocks = sections.flatMap(s => s.blocks);
+    onSave({ ...draft, blocks: allBlocks, publishStatus, ...(({ sections }) => ({ sections }))(({ sections })) } as any);
+  };
+
+  const totalBlocks = sections.reduce((sum, s) => sum + s.blocks.length, 0);
+
+  const selectedBlock = selectedBlockSectionId && selectedBlockId
+    ? sections.find(s => s.id === selectedBlockSectionId)?.blocks.find(b => b.id === selectedBlockId) ?? null
+    : null;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden bg-[#f4f6fb]">
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-navy-100 bg-white px-4 py-2.5">
+      <div className="flex shrink-0 items-center justify-between border-b border-navy-100 bg-white px-4 py-2.5 z-10">
         <div className="flex items-center gap-3">
           <button type="button" onClick={onBack}
             className="flex items-center gap-1.5 text-sm font-medium text-navy-500 hover:text-navy-800">
-            <ArrowLeft className="h-4 w-4" /> My Planners
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden sm:inline">My Planners</span>
           </button>
           <span className="text-navy-200">/</span>
-          <span className="text-sm font-semibold text-navy-800">{draft.settings.name || 'New Planner'}</span>
+          <span className="text-sm font-semibold text-navy-800 truncate max-w-[200px]">
+            {draft.settings.name || 'New Planner'}
+          </span>
         </div>
+
+        {/* Tabs */}
+        <div className="flex items-center gap-1 rounded-xl border border-navy-100 bg-navy-50 p-1">
+          {([
+            { key: 'builder' as Tab, label: 'Builder' },
+            { key: 'preview' as Tab, label: 'Preview' },
+            { key: 'fill' as Tab, label: 'Fill Preview' },
+          ]).map(({ key, label }) => (
+            <button key={key} type="button" onClick={() => { setTab(key); if (key === 'fill') onPreview(); }}
+              className={cn('rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors',
+                tab === key ? 'bg-white shadow-sm text-brand' : 'text-navy-500 hover:text-navy-700')}>
+              {label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onPreview}
-            className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-1.5 text-sm font-medium text-navy-600 hover:bg-navy-50">
-            <Eye className="h-4 w-4" /> Fill Preview
+          <button type="button" onClick={() => handleSave('draft')}
+            className="flex items-center gap-1.5 rounded-lg border border-navy-100 bg-white px-3 py-1.5 text-sm font-medium text-navy-600 hover:bg-navy-50">
+            <Save className="h-4 w-4" />
+            <span className="hidden sm:inline">Save Draft</span>
           </button>
-          <button type="button" onClick={() => onSave({ ...draft, publishStatus: 'draft' })}
-            className="flex items-center gap-1.5 rounded-lg border border-navy-100 px-3 py-1.5 text-sm font-medium text-navy-600 hover:bg-navy-50">
-            <Save className="h-4 w-4" /> Save Draft
-          </button>
-          <button type="button" onClick={() => onSave({ ...draft, publishStatus: 'published' })}
+          <button type="button" onClick={() => handleSave('published')}
             className="flex items-center gap-1.5 rounded-lg bg-brand px-4 py-1.5 text-sm font-semibold text-white hover:bg-brand-600">
-            🚀 Publish
+            🚀 <span className="hidden sm:inline">Publish</span>
           </button>
         </div>
       </div>
@@ -285,506 +1011,112 @@ export function PlannerBuilder({ planner, onSave, onBack, onPreview }: PlannerBu
       {/* 3-column workspace */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Col 1 — Settings (250px) */}
-        <div className="w-[250px] shrink-0 overflow-y-auto border-r border-navy-100 bg-white p-4">
-          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-navy-400">Settings</p>
-
-          <div className="flex flex-col gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Name *</label>
-              <Input value={draft.settings.name} placeholder="My Planner" onChange={e => updateSettings({ name: e.target.value })} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Description</label>
-              <Textarea rows={2} value={draft.settings.description} placeholder="What will users achieve?" onChange={e => updateSettings({ description: e.target.value })} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Category</label>
-              <Select value={draft.settings.category} onChange={e => updateSettings({ category: e.target.value as any })}>
-                {PLANNER_CATEGORIES.map(c => <option key={c}>{c}</option>)}
-              </Select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-navy-600">Difficulty</label>
-                <Select value={draft.settings.difficulty} onChange={e => updateSettings({ difficulty: e.target.value as any })}>
-                  {['Beginner', 'Intermediate', 'Advanced'].map(d => <option key={d}>{d}</option>)}
-                </Select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-navy-600">Language</label>
-                <Select value={draft.settings.language} onChange={e => updateSettings({ language: e.target.value as any })}>
-                  {['English', 'Portuguese', 'Spanish'].map(l => <option key={l}>{l}</option>)}
-                </Select>
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Duration</label>
-              <Input value={draft.settings.estimatedDuration} placeholder="30 minutes/day" onChange={e => updateSettings({ estimatedDuration: e.target.value })} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Author</label>
-              <Input value={draft.settings.author} placeholder="Your name" onChange={e => updateSettings({ author: e.target.value })} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Tags</label>
-              <Input value={draft.settings.tags.join(', ')} placeholder="business, goals" onChange={e => updateSettings({ tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Icon (emoji)</label>
-              <Input value={draft.settings.icon} maxLength={4} onChange={e => updateSettings({ icon: e.target.value })} />
-            </div>
-
-            {/* Theme color */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-navy-600">Theme Color</label>
-              <div className="flex flex-wrap gap-1.5">
-                {THEME_COLORS.map(color => (
-                  <button key={color} type="button" onClick={() => updateSettings({ primaryColor: color })}
-                    className={cn('h-6 w-6 rounded-full border-2 transition-transform hover:scale-110',
-                      draft.settings.primaryColor === color ? 'border-navy-800 scale-110' : 'border-white shadow')}
-                    style={{ background: color }} />
-                ))}
-              </div>
-            </div>
-
-            {/* Cover image */}
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-navy-600">Cover Image</label>
-              {draft.settings.coverImage ? (
-                <div className="relative">
-                  <img src={draft.settings.coverImage} alt="Cover" className="h-24 w-full rounded-lg object-cover" />
-                  <button type="button" onClick={() => updateSettings({ coverImage: null })}
-                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white shadow">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ) : (
-                <div onClick={() => fileRef.current?.click()}
-                  className="flex h-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100">
-                  <p className="text-xs text-navy-400">📷 Upload cover</p>
-                </div>
-              )}
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleCoverUpload} />
-            </div>
-
-            {/* Export settings */}
-            <div className="rounded-lg border border-navy-100 bg-navy-50 p-3">
-              <p className="mb-2 text-xs font-semibold text-navy-600">Export</p>
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <div>
-                  <label className="mb-0.5 block text-[10px] text-navy-500">Page Size</label>
-                  <Select value={draft.settings.pageSize} onChange={e => updateSettings({ pageSize: e.target.value as any })}>
-                    {['A4', 'Letter', 'A5'].map(s => <option key={s}>{s}</option>)}
-                  </Select>
-                </div>
-                <div>
-                  <label className="mb-0.5 block text-[10px] text-navy-500">Orientation</label>
-                  <Select value={draft.settings.pageOrientation} onChange={e => updateSettings({ pageOrientation: e.target.value as any })}>
-                    <option value="portrait">Portrait</option>
-                    <option value="landscape">Landscape</option>
-                  </Select>
-                </div>
-              </div>
-              {[
-                { key: 'exportPdf' as const, label: 'PDF Export' },
-                { key: 'exportPrint' as const, label: 'Print' },
-                { key: 'allowShare' as const, label: 'Share Link' },
-              ].map(opt => (
-                <label key={opt.key} className="flex cursor-pointer items-center gap-2 text-xs text-navy-700 mb-1">
-                  <input type="checkbox" checked={draft.settings[opt.key] as boolean}
-                    onChange={e => updateSettings({ [opt.key]: e.target.checked })}
-                    className="h-3.5 w-3.5 rounded accent-brand" />
-                  {opt.label}
-                </label>
-              ))}
-            </div>
+        {/* Col 1 — Settings (240px) */}
+        <div className="w-[240px] shrink-0 overflow-y-auto border-r border-navy-100 bg-white">
+          <div className="flex items-center gap-2 border-b border-navy-100 px-4 py-3">
+            <Settings className="h-4 w-4 text-navy-400" />
+            <p className="text-xs font-bold uppercase tracking-wider text-navy-400">Planner Settings</p>
           </div>
+          <SettingsPanel
+            settings={draft.settings}
+            onUpdate={updateSettings}
+            fileRef={fileRef}
+            onCoverUpload={handleCoverUpload}
+          />
         </div>
 
-        {/* Col 2 — Preview (flex-1, larger) */}
-        <div className="flex flex-1 flex-col overflow-hidden border-r border-navy-100 bg-[#f4f6fb]">
-          {/* Preview toolbar */}
-          <div className="flex shrink-0 items-center justify-between border-b border-navy-100 bg-white px-4 py-2">
-            <p className="text-xs font-bold uppercase tracking-wider text-navy-400">Planner Preview</p>
-            <div className="flex items-center gap-1 rounded-lg border border-navy-100 bg-navy-50 p-0.5">
-              {([
-                { mode: 'desktop' as PreviewMode, Icon: Monitor },
-                { mode: 'tablet' as PreviewMode, Icon: Tablet },
-                { mode: 'mobile' as PreviewMode, Icon: Smartphone },
-              ]).map(({ mode, Icon }) => (
-                <button key={mode} type="button" onClick={() => setPreviewMode(mode)}
-                  className={cn('flex h-6 w-6 items-center justify-center rounded transition-colors',
-                    previewMode === mode ? 'bg-white shadow-sm text-brand' : 'text-navy-400 hover:text-navy-600')}>
-                  <Icon className="h-3.5 w-3.5" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Preview area */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <PlannerPreview planner={draft} previewMode={previewMode} />
-
-            {/* Tips */}
-            <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-3">
-              <p className="text-[11px] font-semibold text-amber-700">💡 Tips</p>
-              <p className="mt-1 text-[10px] text-amber-600">Add blocks from the right panel. Use the Settings on the left to configure the planner details. Click "Fill Preview" to see how users will experience it.</p>
-            </div>
-
-            {/* Stats */}
-            <div className="mt-3 grid grid-cols-3 gap-3">
-              {[
-                { label: 'Blocks', value: draft.blocks.filter(b => b.enabled).length },
-                { label: 'Total Blocks', value: draft.blocks.length },
-                { label: 'Est. Time', value: draft.settings.estimatedDuration.split('/')[0] },
-              ].map(stat => (
-                <div key={stat.label} className="rounded-xl border border-navy-100 bg-white p-3 text-center shadow-card">
-                  <p className="text-lg font-extrabold text-brand">{stat.value}</p>
-                  <p className="text-[10px] text-navy-400">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Col 3 — Blocks (280px) */}
-        <div className="w-[280px] shrink-0 overflow-y-auto bg-white p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-wider text-navy-400">Blocks ({draft.blocks.length})</p>
-            <button type="button" onClick={() => setShowAddBlock(v => !v)}
-              className="flex items-center gap-1 rounded-lg bg-brand px-2 py-1.5 text-xs font-semibold text-white hover:bg-brand-600">
-              <Plus className="h-3 w-3" /> Add
+        {/* Col 2 — Structure (flex-1) */}
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex shrink-0 items-center justify-between border-b border-navy-100 bg-white px-4 py-2.5">
+            <p className="text-xs font-bold uppercase tracking-wider text-navy-400">Planner Structure</p>
+            <button type="button" onClick={addSection}
+              className="flex items-center gap-1.5 rounded-lg border border-dashed border-navy-200 px-3 py-1.5 text-xs font-semibold text-navy-500 hover:border-brand hover:bg-brand-50 hover:text-brand transition-colors">
+              <Plus className="h-3.5 w-3.5" />
+              Add Section
             </button>
           </div>
 
-          {/* Add block picker */}
-          {showAddBlock && (
-            <div className="mb-3 rounded-xl border border-navy-100 bg-navy-50 p-2.5">
-              <p className="mb-2 text-[10px] font-semibold text-navy-500">Choose type:</p>
-              <div className="grid grid-cols-2 gap-1">
-                {(Object.entries(BLOCK_TYPE_INFO) as [BlockType, typeof BLOCK_TYPE_INFO[BlockType]][]).map(([type, info]) => (
-                  <button key={type} type="button" onClick={() => addBlock(type)}
-                    className="flex items-center gap-1.5 rounded-lg border border-navy-100 bg-white px-2 py-1.5 text-left text-[11px] font-medium text-navy-700 hover:border-brand hover:bg-brand-50">
-                    <span>{info.icon}</span> {info.label}
-                  </button>
-                ))}
+          <div className="flex-1 overflow-y-auto p-4">
+            {/* Cover preview */}
+            <CoverPreview
+              settings={draft.settings}
+              totalBlocks={totalBlocks}
+              totalSections={sections.length}
+            />
+
+            {/* Sections */}
+            {sections.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-navy-200 py-16 text-center">
+                <p className="text-sm font-semibold text-navy-500">No sections yet</p>
+                <p className="mt-1 text-xs text-navy-400">Click "Add Section" to get started</p>
+                <button type="button" onClick={addSection}
+                  className="mt-4 flex items-center gap-2 rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600">
+                  <Plus className="h-4 w-4" /> Add Section
+                </button>
               </div>
-            </div>
-          )}
-
-          {/* Block list */}
-          {draft.blocks.length === 0 ? (
-            <p className="py-6 text-center text-xs text-navy-400">No blocks yet. Click "Add" to start.</p>
-          ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} modifiers={[restrictToVerticalAxis]} onDragEnd={onDragEnd}>
-              <SortableContext items={draft.blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                <div className="flex flex-col gap-1.5 mb-4">
-                  {draft.blocks.map((block, idx) => (
-                    <SortableBlockRow key={block.id} block={block}
-                      isSelected={selectedBlockId === block.id}
-                      onSelect={() => setSelectedBlockId(block.id)}
-                      onDelete={() => deleteBlock(block.id)}
-                      onToggle={() => updateBlock(block.id, { enabled: !block.enabled })}
-                      onMoveUp={() => moveBlockUp(idx)}
-                      onMoveDown={() => moveBlockDown(idx)}
-                      isFirst={idx === 0}
-                      isLast={idx === draft.blocks.length - 1}
-                    />
-                  ))}
-                </div>
-              </SortableContext>
-            </DndContext>
-          )}
-
-          {/* Block editor */}
-          {selectedBlock && (
-            <div className="border-t border-navy-100 pt-3">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-navy-400">Edit Block</p>
-              <div className="flex flex-col gap-2.5">
-                <div>
-                  <label className="mb-1 block text-[10px] font-semibold text-navy-600">Title</label>
-                  <Input value={selectedBlock.title} onChange={e => updateBlock(selectedBlock.id, { title: e.target.value })} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] font-semibold text-navy-600">Description</label>
-                  <Input value={selectedBlock.description} onChange={e => updateBlock(selectedBlock.id, { description: e.target.value })} />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] font-semibold text-navy-600">Icon</label>
-                  <Input value={selectedBlock.icon} maxLength={4} onChange={e => updateBlock(selectedBlock.id, { icon: e.target.value })} />
-                </div>
-
-                {/* Checklist items */}
-                {selectedBlock.config.type === 'checklist' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Items</label>
-                    {(selectedBlock.config as any).items.map((item: any, idx: number) => (
-                      <div key={item.id} className="flex items-center gap-1.5 mb-1">
-                        <Input value={item.label} onChange={e => {
-                          const items = [...(selectedBlock.config as any).items];
-                          items[idx] = { ...item, label: e.target.value };
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, items } as any });
-                        }} />
-                        <button type="button" onClick={() => {
-                          const items = (selectedBlock.config as any).items.filter((_: any, i: number) => i !== idx);
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, items } as any });
-                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const items = [...(selectedBlock.config as any).items, { id: newId(), label: 'New item', required: false }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, items } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add item</button>
-                  {/* Converter para Form Fields (permite misturar tipos de campo) */}
-                    <div className="mt-3 rounded-lg border border-dashed border-navy-200 bg-navy-50/50 p-2.5">
-                      <p className="text-[10px] text-navy-400 mb-1.5">Want to mix field types (text, image, notes)?</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const existingItems = (selectedBlock.config as any).items ?? [];
-                          const fields = existingItems.map((item: any) => ({
-                            id: item.id || newId(),
-                            type: 'checkbox' as const,
-                            label: item.label || 'Item',
-                            placeholder: '',
-                            required: item.required ?? false,
-                            options: [],
-                          }));
-                          updateBlock(selectedBlock.id, {
-                            config: {
-                              type: 'form_fields',
-                              sectionTitle: selectedBlock.title,
-                              description: selectedBlock.description,
-                              icon: selectedBlock.icon,
-                              optional: false,
-                              fields,
-                            } as any,
-                          });
-                        }}
-                        className="text-[11px] font-semibold text-brand-600 hover:text-brand-700 hover:underline"
-                      >
-                        ＋ Convert to mixed field block
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Goals */}
-                {selectedBlock.config.type === 'goals' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Goals</label>
-                    {(selectedBlock.config as any).goals.map((goal: any, idx: number) => (
-                      <div key={goal.id} className="flex items-center gap-1.5 mb-1">
-                        <Input value={goal.label} onChange={e => {
-                          const goals = [...(selectedBlock.config as any).goals];
-                          goals[idx] = { ...goal, label: e.target.value };
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, goals } as any });
-                        }} />
-                        <button type="button" onClick={() => {
-                          const goals = (selectedBlock.config as any).goals.filter((_: any, i: number) => i !== idx);
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, goals } as any });
-                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const goals = [...(selectedBlock.config as any).goals, { id: newId(), label: 'New Goal', placeholder: '' }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, goals } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add goal</button>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {selectedBlock.config.type === 'notes' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Placeholder</label>
-                    <Input value={(selectedBlock.config as any).placeholder}
-                      onChange={e => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, placeholder: e.target.value } as any })} />
-                  </div>
-                )}
-
-                {/* Progress habits */}
-                {selectedBlock.config.type === 'progress' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Habits</label>
-                    {(selectedBlock.config as any).habits.map((habit: any, idx: number) => (
-                      <div key={habit.id} className="flex items-center gap-1.5 mb-1">
-                        <Input value={habit.label} onChange={e => {
-                          const habits = [...(selectedBlock.config as any).habits];
-                          habits[idx] = { ...habit, label: e.target.value };
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, habits } as any });
-                        }} />
-                        <button type="button" onClick={() => {
-                          const habits = (selectedBlock.config as any).habits.filter((_: any, i: number) => i !== idx);
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, habits } as any });
-                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const habits = [...(selectedBlock.config as any).habits, { id: newId(), label: 'New Habit', color: '#1061EC' }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, habits } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add habit</button>
-                  </div>
-                )}
-
-                {/* Resources */}
-                {selectedBlock.config.type === 'resources' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Pre-configured Resources</label>
-                    {(selectedBlock.config as any).resources.map((res: any, idx: number) => (
-                      <div key={res.id} className="mb-2 rounded-lg border border-navy-100 bg-navy-50 p-2">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Input value={res.label} placeholder="Label"
-                            onChange={e => {
-                              const resources = [...(selectedBlock.config as any).resources];
-                              resources[idx] = { ...res, label: e.target.value };
-                              updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
-                            }} />
-                          <button type="button" onClick={() => {
-                            const resources = (selectedBlock.config as any).resources.filter((_: any, i: number) => i !== idx);
-                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
-                          }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                        </div>
-                        <Input value={res.url ?? ''} placeholder="https://..."
-                          onChange={e => {
-                            const resources = [...(selectedBlock.config as any).resources];
-                            resources[idx] = { ...res, url: e.target.value };
-                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
-                          }} />
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const resources = [...(selectedBlock.config as any).resources, { id: newId(), label: 'New Resource', url: '' }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, resources } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add resource</button>
-                  </div>
-                )}
-
-                {/* Worksheet questions */}
-                {selectedBlock.config.type === 'worksheet' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Questions</label>
-                    {(selectedBlock.config as any).questions.map((q: any, idx: number) => (
-                      <div key={q.id} className="flex items-center gap-1.5 mb-1">
-                        <Input value={q.question} placeholder="Question..."
-                          onChange={e => {
-                            const questions = [...(selectedBlock.config as any).questions];
-                            questions[idx] = { ...q, question: e.target.value };
-                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, questions } as any });
-                          }} />
-                        <button type="button" onClick={() => {
-                          const questions = (selectedBlock.config as any).questions.filter((_: any, i: number) => i !== idx);
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, questions } as any });
-                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const questions = [...(selectedBlock.config as any).questions, { id: newId(), question: 'New Question', type: 'textarea', placeholder: '' }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, questions } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add question</button>
-                  </div>
-                )}
-
-                {/* Milestones */}
-                {selectedBlock.config.type === 'milestones' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Milestones</label>
-                    {(selectedBlock.config as any).milestones.map((m: any, idx: number) => (
-                      <div key={m.id} className="flex items-center gap-1.5 mb-1">
-                        <Input value={m.label} placeholder="Milestone..."
-                          onChange={e => {
-                            const milestones = [...(selectedBlock.config as any).milestones];
-                            milestones[idx] = { ...m, label: e.target.value };
-                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, milestones } as any });
-                          }} />
-                        <button type="button" onClick={() => {
-                          const milestones = (selectedBlock.config as any).milestones.filter((_: any, i: number) => i !== idx);
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, milestones } as any });
-                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const milestones = [...(selectedBlock.config as any).milestones, { id: newId(), label: 'New Milestone', placeholder: '' }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, milestones } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add milestone</button>
-                  </div>
-                )}
-
-                {/* Timeline */}
-                {selectedBlock.config.type === 'timeline' && (
-                  <div>
-                    <label className="mb-1 block text-[10px] font-semibold text-navy-600">Events</label>
-                    {(selectedBlock.config as any).events.map((ev: any, idx: number) => (
-                      <div key={ev.id} className="flex items-center gap-1.5 mb-1">
-                        <Input value={ev.label} placeholder="Event..."
-                          onChange={e => {
-                            const events = [...(selectedBlock.config as any).events];
-                            events[idx] = { ...ev, label: e.target.value };
-                            updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, events } as any });
-                          }} />
-                        <button type="button" onClick={() => {
-                          const events = (selectedBlock.config as any).events.filter((_: any, i: number) => i !== idx);
-                          updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, events } as any });
-                        }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => {
-                      const events = [...(selectedBlock.config as any).events, { id: newId(), label: 'New Event', placeholder: '' }];
-                      updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, events } as any });
-                    }} className="text-[11px] font-medium text-brand-600 hover:underline">+ Add event</button>
-                  </div>
-                )}
-
-                {/* Image pre-config */}
-                {selectedBlock.config.type === 'image' && (
-                  <div className="flex flex-col gap-2">
-                    <div>
-                      <label className="mb-1 block text-[10px] font-semibold text-navy-600">Pre-configured Image</label>
-                      {(selectedBlock.config as any).preImage ? (
-                        <div className="relative">
-                          <img src={(selectedBlock.config as any).preImage} alt="" className="w-full h-24 object-cover rounded-lg" />
-                          <button type="button" onClick={() => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, preImage: null } as any })}
-                            className="absolute right-1 top-1 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] text-white">✕</button>
-                        </div>
-                      ) : (
-                        <label className="flex h-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100">
-                          <span className="text-xs text-navy-400">📷 Upload image</span>
-                          <input type="file" accept="image/*" className="hidden"
-                            onChange={e => {
-                              const file = e.target.files?.[0];
-                              if (!file) return;
-                              const reader = new FileReader();
-                              reader.onload = ev => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, preImage: ev.target?.result } as any });
-                              reader.readAsDataURL(file);
-                            }} />
-                        </label>
-                      )}
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[10px] font-semibold text-navy-600">Pre-configured Caption</label>
-                      <Input value={(selectedBlock.config as any).preCaption ?? ''} placeholder="Image caption..."
-                        onChange={e => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, preCaption: e.target.value } as any })} />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[10px] font-semibold text-navy-600">Upload Prompt for User</label>
-                      <Input value={(selectedBlock.config as any).prompt ?? ''} placeholder="Upload your inspiration..."
-                        onChange={e => updateBlock(selectedBlock.id, { config: { ...selectedBlock.config, prompt: e.target.value } as any })} />
-                    </div>
-                  </div>
-                )}
-
-                {/* Form Fields — full editor */}
-                {selectedBlock.config.type === 'form_fields' && (
-                  <FormFieldsBlockEditor
-                    config={selectedBlock.config as unknown as FormFieldsConfig}
-                    onChange={cfg => updateBlock(selectedBlock.id, { config: cfg as any })}
+            ) : (
+              <div className="flex flex-col gap-4">
+                {sections.map((section, idx) => (
+                  <SectionCard
+                    key={section.id}
+                    section={section}
+                    sectionIndex={idx}
+                    selectedBlockId={selectedBlockSectionId === section.id ? selectedBlockId : null}
+                    onSelectBlock={(blockId) => {
+                      setSelectedBlockId(blockId);
+                      setSelectedBlockSectionId(section.id);
+                    }}
+                    onDeleteBlock={(blockId) => deleteBlock(section.id, blockId)}
+                    onAddBlock={(sectionId) => setAddBlockSectionId(sectionId)}
+                    onUpdateSection={(partial) => updateSection(section.id, partial)}
+                    onDeleteSection={() => deleteSection(section.id)}
+                    onMoveUp={() => moveSectionUp(idx)}
+                    onMoveDown={() => moveSectionDown(idx)}
+                    isFirst={idx === 0}
+                    isLast={idx === sections.length - 1}
+                    onReorderBlocks={(from, to) => reorderBlocks(section.id, from, to)}
                   />
-                )}
+                ))}
+
+                <button type="button" onClick={addSection}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-navy-200 py-4 text-sm font-semibold text-navy-400 hover:border-brand hover:bg-brand-50 hover:text-brand transition-colors">
+                  <Plus className="h-4 w-4" />
+                  Add Section
+                </button>
               </div>
+            )}
+          </div>
+        </div>
+
+        {/* Col 3 — Block editor OR empty state (280px) */}
+        <div className="w-[280px] shrink-0 overflow-y-auto border-l border-navy-100 bg-white">
+          {selectedBlock && selectedBlockSectionId ? (
+            <BlockEditorPanel
+              block={selectedBlock}
+              onUpdate={(partial) => updateBlock(selectedBlockSectionId, selectedBlock.id, partial)}
+              onClose={() => { setSelectedBlockId(null); setSelectedBlockSectionId(null); }}
+            />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-navy-50 text-navy-300 mb-3">
+                <Eye className="h-6 w-6" />
+              </div>
+              <p className="text-sm font-semibold text-navy-500">Select a block to edit</p>
+              <p className="mt-1 text-xs text-navy-400 leading-relaxed">
+                Click any block in a section to configure its content and settings.
+              </p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Add Block Modal */}
+      {addBlockSectionId && (
+        <AddBlockModal
+          onAdd={(type) => addBlock(addBlockSectionId, type)}
+          onClose={() => setAddBlockSectionId(null)}
+        />
+      )}
     </div>
   );
 }
