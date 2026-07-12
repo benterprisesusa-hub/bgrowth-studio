@@ -172,9 +172,76 @@ export function FieldEditor({ field, onChange, onDelete, onDuplicate }: FieldEdi
           </div>
         )}
 
+      {/* Image upload/URL */}
+        {field.type === 'image' && (
+          <div className="flex flex-col gap-2">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Image</label>
+            {field.placeholder && field.placeholder.startsWith('data:') ? (
+              <div className="relative">
+                <img src={field.placeholder} alt={field.label} className="h-32 w-full rounded-lg object-cover border border-navy-100" />
+                <button type="button" onClick={() => set('placeholder', '')}
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs shadow">✕</button>
+              </div>
+            ) : (
+              <div>
+                <input type="file" accept="image/*" className="hidden" id={`img-upload-${field._key}`}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => set('placeholder', reader.result as string);
+                    reader.readAsDataURL(file);
+                  }} />
+                <label htmlFor={`img-upload-${field._key}`}
+                  className="flex h-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100 text-xs text-navy-400 gap-1.5">
+                  📷 Upload image
+                </label>
+                <Input className="mt-2" value={field.placeholder?.startsWith('data:') ? '' : (field.placeholder ?? '')}
+                  placeholder="Or paste image URL..."
+                  onChange={(e) => set('placeholder', e.target.value)} />
+              </div>
+            )}
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Caption (optional)</label>
+            <Input value={field.label} placeholder="Image caption..." onChange={(e) => set('label', e.target.value)} />
+          </div>
+        )}
+
+        {/* File upload/URL */}
+        {field.type === 'file' && (
+          <div className="flex flex-col gap-2">
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">File</label>
+            <input type="file" className="hidden" id={`file-upload-${field._key}`}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                  set('placeholder', reader.result as string);
+                  if (!field.label) set('label', file.name);
+                };
+                reader.readAsDataURL(file);
+              }} />
+            <label htmlFor={`file-upload-${field._key}`}
+              className="flex h-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100 text-xs text-navy-400 gap-1.5">
+              📎 Upload file
+            </label>
+            {field.placeholder && !field.placeholder.startsWith('data:') && (
+              <Input value={field.placeholder} placeholder="Or paste file URL..."
+                onChange={(e) => set('placeholder', e.target.value)} />
+            )}
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Label</label>
+            <Input value={field.label} placeholder="e.g. Download Contract Template"
+              onChange={(e) => set('label', e.target.value)} />
+            {field.placeholder && (
+              <div className="flex items-center gap-1.5 rounded-lg border border-navy-100 bg-navy-50 px-3 py-2 text-xs text-navy-600">
+                📎 {field.label || 'File'} — <button type="button" onClick={() => set('placeholder', '')} className="text-red-400 hover:text-red-600">Remove</button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Row 4: icon picker — oculto para title e static_text */}
-        {field.type !== 'title' && field.type !== 'static_text' && (
-          <div>
+        {field.type !== 'title' && field.type !== 'static_text' && (          <div>
             <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
               Field Icon
             </label>
