@@ -49,8 +49,7 @@ export function FieldRenderer({ sectionId, field }: FieldRendererProps) {
       </div>
     );
   }
-  }
-
+  
   return (
     <FormField
       label={field.label}
