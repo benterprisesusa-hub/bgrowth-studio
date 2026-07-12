@@ -1,40 +1,53 @@
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
 
-export async function downloadElementAsPdf(element: HTMLElement, filename: string): Promise<void> {
-  // Temporarily make element visible for capture
-  const prevVisibility = element.style.visibility;
-  const prevPosition = element.style.position;
-  const prevLeft = element.style.left;
-  const prevWidth = element.style.width;
-  const prevHeight = element.style.height;
-  const prevZIndex = element.style.zIndex;
+export async function downloadElementAsPdf(_element: HTMLElement, filename: string, data?: {
+  title: string;
+  company: string;
+  percent: number;
+  sections: { title: string; fields: { label: string; value: string }[] }[];
+}): Promise<void> {
+  if (!data) return;
 
-  element.style.visibility = 'visible';
-  element.style.position = 'fixed';
-  element.style.left = '0';
-  element.style.top = '0';
-  element.style.width = '740px';
-  element.style.height = 'auto';
-  element.style.zIndex = '9999';
+  const doc = new jsPDF({ unit: 'mm', format: 'letter', orientation: 'portrait' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const margin = 15;
+  const contentW = pageW - margin * 2;
+  let y = margin;
 
-  await new Promise((r) => setTimeout(r, 100));
+  // Header
+  doc.setFontSize(18);
+  doc.setTextColor(16, 97, 236);
+  doc.text(data.title, margin, y);
+  y += 8;
 
-  const options = {
-    margin: [10, 10, 10, 10] as [number, number, number, number],
-    filename,
-    image: { type: 'jpeg' as const, quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-    jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' as const },
-  };
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.text(`${data.company} — ${data.percent}% complete`, margin, y);
+  y += 10;
 
-  try {
-    await html2pdf().set(options).from(element).save();
-  } finally {
-    element.style.visibility = prevVisibility;
-    element.style.position = prevPosition;
-    element.style.left = prevLeft;
-    element.style.width = prevWidth;
-    element.style.height = prevHeight;
-    element.style.zIndex = prevZIndex;
+  // Sections
+  for (const section of data.sections) {
+    if (y > 250) { doc.addPage(); y = margin; }
+
+    doc.setFontSize(11);
+    doc.setTextColor(16, 97, 236);
+    doc.text(section.title, margin, y);
+    y += 6;
+
+    for (const field of section.fields) {
+      if (!field.value) continue;
+      if (y > 260) { doc.addPage(); y = margin; }
+
+      doc.setFontSize(9);
+      doc.setTextColor(80, 80, 80);
+      doc.text(`${field.label}:`, margin, y);
+      doc.setTextColor(30, 30, 30);
+      const lines = doc.splitTextToSize(field.value, contentW - 40);
+      doc.text(lines, margin + 40, y);
+      y += lines.length * 5 + 2;
+    }
+    y += 4;
   }
+
+  doc.save(filename);
 }
