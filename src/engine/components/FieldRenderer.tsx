@@ -39,15 +39,12 @@ export function FieldRenderer({ sectionId, field }: FieldRendererProps) {
   }
 
   if (field.type === 'link') {
+    const href = field.placeholder ?? '#';
+    const linkLabel = field.label || field.placeholder || href;
     return (
       <div className={field.fullWidth ? 'sm:col-span-2' : undefined}>
-        
-          href={field.placeholder ?? '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline"
-        >
-          🔗 {field.label || field.placeholder}
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline">
+          {'🔗 '}{linkLabel}
         </a>
       </div>
     );
