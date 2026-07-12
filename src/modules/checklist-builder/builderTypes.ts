@@ -67,8 +67,8 @@ export const FIELD_TYPE_LABELS: Record<FieldType, string> = {
   title: 'Title (Heading)',
   static_text: 'Text (Paragraph)',
   checkbox: 'Checkbox',
+  link: 'Link (URL)',
 };
-
 export const ICON_OPTIONS = [
   { value: 'user', label: 'Person' },
   { value: 'users', label: 'People' },
