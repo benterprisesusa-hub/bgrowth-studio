@@ -8,26 +8,27 @@ export async function downloadElementAsPdf(
     orientation?: 'portrait' | 'landscape';
   }
 ): Promise<void> {
-  // Save original style properties
-  const originalPosition = element.style.position;
-  const originalLeft = element.style.left;
-  const originalTop = element.style.top;
-  const originalWidth = element.style.width;
-  const originalZIndex = element.style.zIndex;
-  const originalVisibility = element.style.visibility;
-  const originalOpacity = element.style.opacity;
+  // Create a deep clone of the element to prevent modifying the live UI
+  const clone = element.cloneNode(true) as HTMLElement;
 
-  // Temporarily style it so that html2canvas can capture it perfectly.
-  // It must be visible and placed in the layout flow for html2canvas to render it,
-  // but we can position it at fixed left: 0, top: 0 with z-index: -99999 so it remains
-  // completely invisible to the user behind other elements.
-  element.style.setProperty('position', 'fixed', 'important');
-  element.style.setProperty('left', '0px', 'important');
-  element.style.setProperty('top', '0px', 'important');
-  element.style.setProperty('width', '800px', 'important');
-  element.style.setProperty('z-index', '-99999', 'important');
-  element.style.setProperty('visibility', 'visible', 'important');
-  element.style.setProperty('opacity', '1', 'important');
+  // Remove the css class that places the original offscreen
+  clone.classList.remove('printable-summary');
+
+  // Apply clean inline styles to the clone so html2canvas sees it at x=0, y=0,
+  // making it fully visible to html2canvas but invisible to the user behind other layers.
+  clone.style.setProperty('position', 'fixed', 'important');
+  clone.style.setProperty('left', '0px', 'important');
+  clone.style.setProperty('top', '0px', 'important');
+  clone.style.setProperty('width', '800px', 'important');
+  clone.style.setProperty('z-index', '-99999', 'important');
+  clone.style.setProperty('display', 'block', 'important');
+  clone.style.setProperty('visibility', 'visible', 'important');
+  clone.style.setProperty('opacity', '1', 'important');
+  clone.style.setProperty('pointer-events', 'none', 'important');
+  clone.style.setProperty('background-color', '#ffffff', 'important');
+
+  // Temporarily mount the clone to document.body so the browser lays it out properly
+  document.body.appendChild(clone);
 
   const options = {
     margin: [10, 10, 10, 10] as [number, number, number, number],
@@ -39,6 +40,7 @@ export async function downloadElementAsPdf(
       backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
+      windowWidth: 800,
     },
     jsPDF: {
       unit: 'mm',
@@ -48,15 +50,11 @@ export async function downloadElementAsPdf(
   };
 
   try {
-    await html2pdf().set(options).from(element).save();
+    await html2pdf().set(options).from(clone).save();
   } finally {
-    // Restore original styles
-    element.style.position = originalPosition;
-    element.style.left = originalLeft;
-    element.style.top = originalTop;
-    element.style.width = originalWidth;
-    element.style.zIndex = originalZIndex;
-    element.style.visibility = originalVisibility;
-    element.style.opacity = originalOpacity;
+    // Remove the temporary clone from the document
+    if (clone.parentNode) {
+      clone.parentNode.removeChild(clone);
+    }
   }
 }
