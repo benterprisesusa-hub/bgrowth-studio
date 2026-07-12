@@ -38,7 +38,7 @@ export function FieldRenderer({ sectionId, field }: FieldRendererProps) {
     );
   }
 
-  if (field.type === 'link') {
+  if (field.type === 'image') {     return (       <div className={field.fullWidth !== false ? 'sm:col-span-2' : undefined}>         {field.placeholder && (           <img src={field.placeholder} alt={field.label} className="w-full rounded-lg object-cover border border-navy-100 max-h-64" />         )}         {field.label && <p className="mt-1 text-center text-xs text-navy-400">{field.label}</p>}       </div>     );   }    if (field.type === 'file') {     return (       <div className={field.fullWidth !== false ? 'sm:col-span-2' : undefined}>         {field.placeholder && (           <a href={field.placeholder} download={field.label || 'file'}             className="inline-flex items-center gap-2 rounded-lg border border-navy-100 bg-navy-50 px-4 py-2.5 text-sm font-medium text-navy-700 hover:bg-navy-100">             {'📎 '}{field.label || 'Download File'}           </a>         )}       </div>     );   }    if (field.type === 'link') {
     const href = field.placeholder ?? '#';
     const linkLabel = field.label || field.placeholder || href;
     return (
