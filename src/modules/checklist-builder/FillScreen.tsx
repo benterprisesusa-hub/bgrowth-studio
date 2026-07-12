@@ -203,7 +203,9 @@ export function FillScreen({ template, instance, ownerEmail, onBack }: FillScree
       </div>
 
       {/* Hidden printable summary */}
-      <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} />
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+  <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} />
+</div>
 
       <ConfirmDialog
         open={resetDialogOpen}
