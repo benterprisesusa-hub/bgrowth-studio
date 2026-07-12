@@ -94,6 +94,20 @@ export function FieldEditor({ field, onChange, onDelete, onDuplicate }: FieldEdi
           </div>
         </div>
 
+     {/* Row 2: link URL (only for link type) */}
+        {field.type === 'link' && (
+          <div>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
+              URL
+            </label>
+            <Input
+              value={field.placeholder ?? ''}
+              placeholder="https://..."
+              onChange={(e) => set('placeholder', e.target.value)}
+            />
+          </div>
+        )}
+
         {/* Row 2: placeholder */}
         {!isStatic && (
           <div>
