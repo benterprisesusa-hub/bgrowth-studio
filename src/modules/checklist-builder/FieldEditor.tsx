@@ -32,13 +32,39 @@ export function FieldEditor({ field, onChange, onDelete, onDuplicate }: FieldEdi
               {field.type === 'title' ? 'Heading Text' : field.type === 'static_text' ? 'Paragraph Text' : 'Field Label'}
             </label>
             {field.type === 'static_text' ? (
-              <textarea
-                rows={2}
-                className="w-full resize-y rounded-lg border border-navy-100 bg-white px-3 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
-                value={field.label}
-                placeholder="Enter information or paragraph text..."
-                onChange={(e) => set('label', e.target.value)}
-              />
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-1">
+                  {[
+                    { title: 'Bold', syntax: ['<b>', '</b>'], icon: '𝐁' },
+                    { title: 'Italic', syntax: ['<i>', '</i>'], icon: '𝘐' },
+                    { title: 'Link', syntax: ['<a href="URL">', '</a>'], icon: '🔗' },
+                  ].map((btn) => (
+                    <button key={btn.title} type="button" title={btn.title}
+                      onClick={() => {
+                        const ta = document.activeElement as HTMLTextAreaElement;
+                        const start = ta?.selectionStart ?? field.label.length;
+                        const end = ta?.selectionEnd ?? field.label.length;
+                        const selected = field.label.slice(start, end);
+                        const newVal = field.label.slice(0, start) + btn.syntax[0] + selected + btn.syntax[1] + field.label.slice(end);
+                        set('label', newVal);
+                      }}
+                      className="flex h-7 items-center justify-center rounded border border-navy-100 bg-white px-2 text-xs text-navy-500 hover:bg-navy-50 hover:text-navy-800">
+                      {btn.icon}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  rows={3}
+                  className="w-full resize-y rounded-lg border border-navy-100 bg-white px-3 py-2 text-sm text-navy-800 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/30"
+                  value={field.label}
+                  placeholder="Enter information or paragraph text... Use toolbar for formatting."
+                  onChange={(e) => set('label', e.target.value)}
+                />
+                {field.label && (
+                  <div className="rounded-lg border border-navy-100 bg-navy-50 px-3 py-2 text-sm text-navy-600"
+                    dangerouslySetInnerHTML={{ __html: field.label }} />
+                )}
+              </div>
             ) : (
               <Input
                 value={field.label}
