@@ -94,19 +94,12 @@ export function FillScreen({ template, instance, ownerEmail, onBack }: FillScree
 
   const handlePrint = () => window.print();
 
- const handleDownloadPdf = async () => {
-    const appSettings = (() => {
-      try {
-        const raw = localStorage.getItem('bgrowth.checklist-builder.settings');
-        return raw ? JSON.parse(raw) : null;
-      } catch { return null; }
-    })();
-    const companyName = appSettings?.companyName || config.brand.companyLabel || 'BGrowth Club';
-    const logoUrl = appSettings?.logoUrl ?? null;
-    const filename = `${config.brand.name.replace(/\s+/g, '-')}-${instance.clientOrJobRef?.replace(/\s+/g, '-') || instanceId}.pdf`;
+const handleDownloadPdf = async () => {
+    if (!printableRef.current) return;
     setIsGeneratingPdf(true);
     try {
-      await downloadChecklistAsPdf(config, values, progress.percent, filename, companyName, logoUrl);
+      const filename = `${config.brand.name.replace(/\s+/g, '-')}-${instance.clientOrJobRef?.replace(/\s+/g, '-') || instanceId}.pdf`;
+      await downloadElementAsPdf(printableRef.current, filename);
       showToast('PDF downloaded');
     } finally {
       setIsGeneratingPdf(false);
