@@ -88,7 +88,9 @@ export async function downloadChecklistAsPdf(
 
   try {
     await html2pdf().set(options).from(container.firstElementChild as HTMLElement).save();
+    console.log('PDF saved successfully');
+  } catch(err) {
+    console.error('PDF error:', err);
   } finally {
     document.body.removeChild(container);
   }
-}
