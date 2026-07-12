@@ -595,18 +595,91 @@ function BlockEditorPanel({
             </div>
           )}
 
-          {/* Image */}
+         {/* Image */}
           {block.config.type === 'image' && (
             <div className="flex flex-col gap-2">
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Image</label>
+              {(block.config as any).imageData ? (
+                <div className="relative">
+                  <img src={(block.config as any).imageData} alt="block" className="h-32 w-full rounded-lg object-cover border border-navy-100" />
+                  <button type="button" onClick={() => onUpdate({ config: { ...block.config, imageData: null } as any })}
+                    className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white text-xs shadow">✕</button>
+                </div>
+              ) : (
+                <div>
+                  <input type="file" accept="image/*" className="hidden" id={`img-${block.id}`}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = () => onUpdate({ config: { ...block.config, imageData: reader.result } as any });
+                      reader.readAsDataURL(file);
+                    }} />
+                  <label htmlFor={`img-${block.id}`}
+                    className="flex h-20 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100 text-xs text-navy-400 gap-1.5">
+                    📷 Upload image
+                  </label>
+                  <Input className="mt-2" value={(block.config as any).imageUrl ?? ''} placeholder="Or paste image URL..."
+                    onChange={e => onUpdate({ config: { ...block.config, imageUrl: e.target.value } as any })} />
+                </div>
+              )}
               <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Caption</label>
               <Input value={(block.config as any).preCaption ?? ''} placeholder="Image caption..."
                 onChange={e => onUpdate({ config: { ...block.config, preCaption: e.target.value } as any })} />
-              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Upload Prompt</label>
-              <Input value={(block.config as any).prompt ?? ''} placeholder="Upload your inspiration..."
-                onChange={e => onUpdate({ config: { ...block.config, prompt: e.target.value } as any })} />
             </div>
           )}
 
+          {/* File */}
+          {block.config.type === 'resources' && (
+            <div className="flex flex-col gap-2">
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Upload File</label>
+              <input type="file" className="hidden" id={`file-${block.id}`}
+                onChange={e => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    const resources = [...((block.config as any).resources ?? []), {
+                      id: newId(), label: file.name, url: reader.result as string, fileData: true
+                    }];
+                    onUpdate({ config: { ...block.config, resources } as any });
+                  };
+                  reader.readAsDataURL(file);
+                }} />
+              <label htmlFor={`file-${block.id}`}
+                className="flex h-16 cursor-pointer items-center justify-center rounded-lg border-2 border-dashed border-navy-200 bg-navy-50 hover:bg-navy-100 text-xs text-navy-400 gap-1.5">
+                📎 Upload file
+              </label>
+              <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">Resources</label>
+              {(block.config as any).resources.map((res: any, idx: number) => (
+                <div key={res.id} className="mb-2 rounded-lg border border-navy-100 bg-navy-50 p-2">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Input value={res.label} placeholder="Label" onChange={e => {
+                      const resources = [...(block.config as any).resources];
+                      resources[idx] = { ...res, label: e.target.value };
+                      onUpdate({ config: { ...block.config, resources } as any });
+                    }} />
+                    <button type="button" onClick={() => {
+                      const resources = (block.config as any).resources.filter((_: any, i: number) => i !== idx);
+                      onUpdate({ config: { ...block.config, resources } as any });
+                    }} className="text-navy-300 hover:text-red-500 shrink-0"><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                  {!res.fileData && (
+                    <Input value={res.url ?? ''} placeholder="https://..." onChange={e => {
+                      const resources = [...(block.config as any).resources];
+                      resources[idx] = { ...res, url: e.target.value };
+                      onUpdate({ config: { ...block.config, resources } as any });
+                    }} />
+                  )}
+                  {res.fileData && <p className="text-[10px] text-navy-400">📎 Uploaded file</p>}
+                </div>
+              ))}
+              <button type="button" onClick={() => {
+                const resources = [...(block.config as any).resources, { id: newId(), label: 'New Resource', url: '' }];
+                onUpdate({ config: { ...block.config, resources } as any });
+              }} className="text-[11px] font-semibold text-brand hover:underline">+ Add link</button>
+            </div>
+          )}
           {/* Form Fields */}
           {block.config.type === 'form_fields' && (
             <FormFieldsBlockEditor
