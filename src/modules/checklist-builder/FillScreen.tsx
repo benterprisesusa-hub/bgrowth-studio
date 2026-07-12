@@ -95,7 +95,12 @@ export function FillScreen({ template, instance, ownerEmail, onBack }: FillScree
   const handlePrint = () => window.print();
 
   const handleDownloadPdf = async () => {
-    if (!printableRef.current) return;
+    if (!printableRef.current) {
+      console.log('REF IS NULL');
+      return;
+    }
+    console.log('ELEMENT HTML:', printableRef.current.innerHTML);
+    console.log('ELEMENT DIMENSIONS:', printableRef.current.offsetWidth, printableRef.current.offsetHeight);
     setIsGeneratingPdf(true);
     try {
       const filename = `${config.brand.name.replace(/\s+/g, '-')}-${instance.clientOrJobRef?.replace(/\s+/g, '-') || instanceId}.pdf`;
