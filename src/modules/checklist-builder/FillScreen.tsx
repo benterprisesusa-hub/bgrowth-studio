@@ -15,7 +15,7 @@ import { buildZodSchema, requiredFieldPaths } from '../../engine/schemaBuilder';
 import { buildDefaultValues } from '../../engine/defaultValues';
 import { applyBrandTheme } from '../../engine/theme';
 import { deserializeData } from './api';
-import { downloadChecklistAsPdf } from '../../lib/pdf';
+import { downloadElementAsPdf } from '../../lib/pdf';
 import type { ChecklistInstance, ParsedTemplate } from './types';
 import type { ChecklistData } from '../../engine/types';
 import { cn } from '../../lib/utils';
