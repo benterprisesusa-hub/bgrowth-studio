@@ -208,7 +208,7 @@ const handleDownloadPdf = async () => {
       </div>
 
       {/* Hidden printable summary */}
-     <div style={{ position: 'fixed', left: '-9999px', top: 0, width: '740px', height: 'auto', overflow: 'visible' }}>
+     <div className="printable-summary-container">
         <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} blankMode={isBlankMode} />
       </div>
 
