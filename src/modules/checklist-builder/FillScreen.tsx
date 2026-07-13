@@ -52,7 +52,7 @@ export function FillScreen({ template, instance, ownerEmail, onBack }: FillScree
   const [activeId, setActiveId] = useState<string>(config.sections[0].id);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);   const [isBlankMode, setIsBlankMode] = useState(false);
   const printableRef = useRef<HTMLDivElement>(null);
 
   const showToast = useCallback((message: string) => {
@@ -167,18 +167,12 @@ const handleDownloadPdf = async () => {
               <Cloud className="h-4 w-4" />
               Save
             </SecondaryButton>
-            <SecondaryButton size="sm" onClick={handlePrint}>
-              <Printer className="h-4 w-4" />
-              <span className="hidden sm:inline">Print</span>
-            </SecondaryButton>
-            <SecondaryButton size="sm" onClick={() => {
-              if (printableRef.current) {
-                const orig = printableRef.current.getAttribute('data-blank');
-                printableRef.current.setAttribute('data-blank', 'true');
-                window.print();
-                if (orig) printableRef.current.setAttribute('data-blank', orig);
-                else printableRef.current.removeAttribute('data-blank');
-              }
+            <SecondaryButton size="sm" onClick={async () => {
+              setIsBlankMode(true);
+              await new Promise(r => setTimeout(r, 100));
+              const filename = `${config.brand.name.replace(/\s+/g, '-')}-blank.pdf`;
+              if (printableRef.current) await downloadElementAsPdf(printableRef.current, filename);
+              setIsBlankMode(false);
             }}>
               <Printer className="h-4 w-4" />
               <span className="hidden sm:inline">Print Blank</span>
@@ -215,7 +209,7 @@ const handleDownloadPdf = async () => {
 
       {/* Hidden printable summary */}
      <div style={{ position: 'fixed', left: '-9999px', top: 0, width: '740px', height: 'auto', overflow: 'visible' }}>
-        <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} blankMode={false} />
+        <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} blankMode={isBlankMode} />
       </div>
 
       <ConfirmDialog
