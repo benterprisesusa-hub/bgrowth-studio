@@ -31,15 +31,39 @@ body {
   border-radius: 6px;
 }
 
-.printable-summary {
+/* Container invisível para o usuário, mas perfeitamente visível para o gerador de PDF */
+.printable-summary-container {
+  width: 0;
+  height: 0;
+  overflow: hidden;
   position: absolute;
-  left: -9999px;
   top: 0;
+  left: 0;
+}
+
+/* O elemento real da folha de PDF */
+.printable-summary {
   width: 800px;
+  background-color: #ffffff;
+  position: relative;
 }
 
 @media print {
   .no-print { display: none !important; }
   body { background: #ffffff !important; }
-  .printable-summary { position: static; left: auto; top: auto; width: auto; }
+  
+  /* Restaura o fluxo normal para impressão física */
+  .printable-summary-container {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    position: static;
+  }
+  
+  .printable-summary {
+    position: static;
+    left: auto;
+    top: auto;
+    width: auto;
+  }
 }
