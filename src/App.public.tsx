@@ -187,7 +187,7 @@ function PublicFillInner({ config, templateId }: { config: ChecklistConfig; temp
         </main>
 
         <Footer footer={config.footer} />
-        <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} />
+        <div className="no-print printable-summary-container">   <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} /> </div>
 
         <ConfirmDialog
           open={resetDialogOpen}
