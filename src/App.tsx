@@ -142,7 +142,7 @@ function PublicFillInner({ config, storageId }: { config: ChecklistConfig; stora
           </section>
         </main>
         <Footer footer={config.footer} />
-        <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} />
+        <div className="no-print printable-summary-container">   <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} /> </div>
         <ConfirmDialog open={resetDialogOpen} title="Reset the entire checklist?" description="This clears every field stored in this browser." confirmLabel="Reset Form" onConfirm={() => { clearFormData(storageId); reset(buildDefaultValues(config)); setActiveId(config.sections[0].id); setResetDialogOpen(false); showToast('Form has been reset'); }} onCancel={() => setResetDialogOpen(false)} />
         <Toast message={toast.message} visible={toast.visible} />
       </div>
