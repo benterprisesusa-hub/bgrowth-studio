@@ -171,6 +171,18 @@ const handleDownloadPdf = async () => {
               <Printer className="h-4 w-4" />
               <span className="hidden sm:inline">Print</span>
             </SecondaryButton>
+            <SecondaryButton size="sm" onClick={() => {
+              if (printableRef.current) {
+                const orig = printableRef.current.getAttribute('data-blank');
+                printableRef.current.setAttribute('data-blank', 'true');
+                window.print();
+                if (orig) printableRef.current.setAttribute('data-blank', orig);
+                else printableRef.current.removeAttribute('data-blank');
+              }
+            }}>
+              <Printer className="h-4 w-4" />
+              <span className="hidden sm:inline">Print Blank</span>
+            </SecondaryButton>
             <PrimaryButton size="sm" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">{isGeneratingPdf ? 'Preparing…' : 'PDF'}</span>
