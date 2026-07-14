@@ -7,8 +7,23 @@
  * swap the config, get a different product, with no component changes.
  */
 
-// Encontre o tipo FieldType e acrescente 'image' no final, ficando exatamente assim:
-export type FieldType = 'text' | 'email' | 'phone' | 'date' | 'time' | 'number' | 'select' | 'textarea' | 'title' | 'static_text' | 'image';| 'textarea' | 'title' | 'static_text' | 'checkbox' | 'link' | 'image' | 'file';
+// Definição limpa e corrigida dos tipos de campos suportados
+export type FieldType = 
+  | 'text' 
+  | 'email' 
+  | 'phone' 
+  | 'date' 
+  | 'time' 
+  | 'number' 
+  | 'select' 
+  | 'textarea' 
+  | 'title' 
+  | 'static_text' 
+  | 'image' 
+  | 'static_image' 
+  | 'checkbox' 
+  | 'link' 
+  | 'file';
 
 export interface FieldConfig {
   id: string;
@@ -17,6 +32,8 @@ export interface FieldConfig {
   icon: string;
   required?: boolean;
   placeholder?: string;
+  /** Para o tipo static_image: armazena a imagem de referência em base64 compactada */
+  staticImageUrl?: string;
   /** Required for type === 'select'. */
   options?: string[];
   /** sm:col-span-2 style full-width hint for the field grid. */
