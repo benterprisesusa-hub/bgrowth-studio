@@ -7,7 +7,8 @@
  * swap the config, get a different product, with no component changes.
  */
 
-export type FieldType = 'text' | 'email' | 'phone' | 'date' | 'time' | 'number' | 'select' | 'textarea' | 'title' | 'static_text' | 'checkbox' | 'link' | 'image' | 'file';
+// Encontre o tipo FieldType e acrescente 'image' no final, ficando exatamente assim:
+export type FieldType = 'text' | 'email' | 'phone' | 'date' | 'time' | 'number' | 'select' | 'textarea' | 'title' | 'static_text' | 'image';| 'textarea' | 'title' | 'static_text' | 'checkbox' | 'link' | 'image' | 'file';
 
 export interface FieldConfig {
   id: string;
