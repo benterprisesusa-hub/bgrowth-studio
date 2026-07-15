@@ -3,7 +3,6 @@
  */
 import type { ChecklistTemplate, ChecklistInstance } from './types';
 import type { ChecklistData } from '../../engine/types';
-import { compressString, decompressString } from '../../lib/compress';
 import { compressString } from '../../lib/compress';
 
 const IS_DEV = import.meta.env.DEV;
