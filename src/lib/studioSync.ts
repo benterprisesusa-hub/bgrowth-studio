@@ -3,10 +3,11 @@
  * Saves and loads all Studio data to/from Google Sheets via GAS proxy
  */
 
-const GAS_PROXY = '/api/gas-proxy';
+const GAS_PROXY_GET = '/api/gas-proxy';
+const GAS_PROXY_POST = '/api/gas-proxy-post';
 
 async function gasCall(action: string, params: Record<string, string> = {}, method: 'GET' | 'POST' = 'GET'): Promise<any> {
-  const url = new URL(GAS_PROXY, window.location.origin);
+  const url = new URL(method === 'POST' ? GAS_PROXY_POST : GAS_PROXY_GET, window.location.origin);
   url.searchParams.set('page', 'api');
   url.searchParams.set('action', action);
   
