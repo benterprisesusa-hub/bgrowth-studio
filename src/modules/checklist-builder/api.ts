@@ -35,6 +35,7 @@ async function gasPost<T>(params: Record<string, string>): Promise<T> {
   if (json.error) throw new Error(json.error);
   return json as T;
 }
+
 export async function api_getTemplates(ownerEmail: string): Promise<ChecklistTemplate[]> {
   return gasGet({ action: 'checklist_getTemplates', ownerEmail });
 }
@@ -43,13 +44,21 @@ export async function api_getTemplate(templateId: string): Promise<ChecklistTemp
   return gasGet({ action: 'checklist_getTemplate', templateId });
 }
 
-export async function api_saveTemplate(payload: { ... }) {
+export async function api_saveTemplate(payload: {
+  templateId?: string;
+  ownerEmail: string;
+  name: string;
+  category?: string;
+  configJson: string;
+  status?: string;
+}): Promise<ChecklistTemplate> {
   return gasPost({
     action: 'checklist_saveTemplate',
     ownerEmail: payload.ownerEmail,
-    payload: JSON.stringify(payload), // Garante que o payload vá serializado em string
+    payload: JSON.stringify(payload),
   });
 }
+
 export async function api_archiveTemplate(templateId: string): Promise<{ templateId: string; status: string }> {
   return gasGet({ action: 'checklist_archiveTemplate', templateId });
 }
@@ -66,13 +75,22 @@ export async function api_getInstance(instanceId: string): Promise<ChecklistInst
   return gasGet({ action: 'checklist_getInstance', instanceId });
 }
 
-export async function api_saveInstance(payload: { ... }) {
+export async function api_saveInstance(payload: {
+  instanceId?: string;
+  templateId?: string;
+  ownerEmail: string;
+  clientOrJobRef?: string;
+  dataJson: string;
+  progressPercent: number;
+  status?: string;
+}): Promise<ChecklistInstance> {
   return gasPost({
     action: 'checklist_saveInstance',
     ownerEmail: payload.ownerEmail,
-    payload: JSON.stringify(payload), // Garante que o payload vá serializado em string
+    payload: JSON.stringify(payload),
   });
 }
+
 export function serializeData(data: ChecklistData): string {
   return JSON.stringify(data);
 }
