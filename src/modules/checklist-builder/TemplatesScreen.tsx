@@ -9,6 +9,7 @@ import type { ChecklistTemplate, ParsedTemplate } from './types';
 import type { BuilderDraft } from './builderTypes';
 import { ImportTemplateJsonModal } from './ImportTemplateJsonModal';
 import { loadSettings } from './SettingsScreen';
+import { decompressString } from '../../lib/compress';
 
 interface TemplatesScreenProps {
   ownerEmail: string;
@@ -45,10 +46,14 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
     }
   };
 
-  const handleExportJson = (e: React.MouseEvent, t: ChecklistTemplate) => {
+const handleExportJson = async (e: React.MouseEvent, t: ChecklistTemplate) => {
     e.stopPropagation();
     try {
-      const config = JSON.parse(t.configJson);
+      let configJson = t.configJson;
+      if (configJson.startsWith('GZIP:')) {
+        configJson = await decompressString(configJson.slice(5));
+      }
+      const config = JSON.parse(configJson);
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
       const downloadAnchor = document.createElement('a');
       downloadAnchor.setAttribute("href", dataStr);
@@ -76,20 +81,26 @@ export function TemplatesScreen({ ownerEmail, onOpen, onNew, onEdit }: Templates
 
   useEffect(() => { load(); }, [ownerEmail]);
 
-  const handleOpen = (t: ChecklistTemplate) => {
+  const handleOpen = async (t: ChecklistTemplate) => {
     try {
-      const config = JSON.parse(t.configJson);
-      onOpen({ ...t, config });
+      let configJson = t.configJson;
+      if (configJson.startsWith('GZIP:')) {
+        configJson = await decompressString(configJson.slice(5));
+      }
+      const config = JSON.parse(configJson);      onOpen({ ...t, config });
     } catch {
       setError('This template has an invalid config.');
     }
   };
 
-  const handleEdit = (e: React.MouseEvent, t: ChecklistTemplate) => {
+ const handleEdit = async (e: React.MouseEvent, t: ChecklistTemplate) => {
     e.stopPropagation();
     try {
-      const config = JSON.parse(t.configJson);
-      // Convert config back to BuilderDraft format for editing
+      let configJson = t.configJson;
+      if (configJson.startsWith('GZIP:')) {
+        configJson = await decompressString(configJson.slice(5));
+      }
+      const config = JSON.parse(configJson);      // Convert config back to BuilderDraft format for editing
       const draft: BuilderDraft = {
         templateId: t.templateId,
         name: config.brand?.name ?? t.name,
