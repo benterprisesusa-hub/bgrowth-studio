@@ -31,9 +31,7 @@ async function gasPost<T>(params: Record<string, string>): Promise<T> {
     body: JSON.stringify(params),
   });
   const text = await res.text();
-  alert('GAS RESPONSE: ' + text.substring(0, 300));
-  const json = JSON.parse(text);
-  if (json.error) throw new Error(json.error);
+  const json = JSON.parse(text);  if (json.error) throw new Error(json.error);
   return json as T;
 }
 
