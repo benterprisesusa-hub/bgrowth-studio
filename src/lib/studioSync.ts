@@ -5,16 +5,28 @@
 
 const GAS_PROXY = '/api/gas-proxy';
 
-async function gasCall(action: string, params: Record<string, string> = {}): Promise<any> {
+async function gasCall(action: string, params: Record<string, string> = {}, method: 'GET' | 'POST' = 'GET'): Promise<any> {
   const url = new URL(GAS_PROXY, window.location.origin);
   url.searchParams.set('page', 'api');
   url.searchParams.set('action', action);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const res = await fetch(url.toString());
-  const json = await res.json();
-  return json;
+  
+  if (method === 'GET') {
+    Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+    const res = await fetch(url.toString());
+    const json = await res.json();
+    return json;
+  } else {
+    const res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(params) // Envia o payload com segurança no corpo da requisição
+    });
+    const json = await res.json();
+    return json;
+  }
 }
-
 // -----------------------------------------------------------------------
 // AI Products
 // -----------------------------------------------------------------------
@@ -28,9 +40,9 @@ export async function gasGetAIProducts(ownerEmail: string): Promise<any[]> {
 export async function gasSaveAIProduct(ownerEmail: string, product: any): Promise<boolean> {
   try {
     const result = await gasCall('studio_saveAIProduct', {
-      ownerEmail,
-      product: JSON.stringify(product),
-    });
+  ownerEmail,
+  product: JSON.stringify(product),
+}, 'POST'); // <--- adicionado 'POST' aqui
     return result?.ok === true;
   } catch { return false; }
 }
@@ -54,10 +66,11 @@ export async function gasGetPlanners(ownerEmail: string): Promise<any[]> {
 
 export async function gasSavePlanners(ownerEmail: string, planners: any[]): Promise<boolean> {
   try {
-    const result = await gasCall('studio_savePlanners', {
-      ownerEmail,
-      planners: JSON.stringify(planners),
-    });
+    // Mude para:
+const result = await gasCall('studio_savePlanners', {
+  ownerEmail,
+  planners: JSON.stringify(planners),
+}, 'POST'); // <--- adicionado 'POST' here
     return result?.ok === true;
   } catch { return false; }
 }
@@ -74,10 +87,11 @@ export async function gasGetCalculators(ownerEmail: string): Promise<any[]> {
 
 export async function gasSaveCalculators(ownerEmail: string, calculators: any[]): Promise<boolean> {
   try {
-    const result = await gasCall('studio_saveCalculators', {
-      ownerEmail,
-      calculators: JSON.stringify(calculators),
-    });
+    // Mude para:
+const result = await gasCall('studio_saveCalculators', {
+  ownerEmail,
+  calculators: JSON.stringify(calculators),
+}, 'POST'); // <--- adicionado 'POST' here
     return result?.ok === true;
   } catch { return false; }
 }
@@ -94,10 +108,11 @@ export async function gasGetChecklists(ownerEmail: string): Promise<any[]> {
 
 export async function gasSaveChecklists(ownerEmail: string, checklists: any[]): Promise<boolean> {
   try {
-    const result = await gasCall('studio_saveChecklists', {
-      ownerEmail,
-      checklists: JSON.stringify(checklists),
-    });
+// Mude para:
+const result = await gasCall('studio_saveChecklists', {
+  ownerEmail,
+  checklists: JSON.stringify(checklists),
+}, 'POST'); // <--- adicionado 'POST' here
     return result?.ok === true;
   } catch { return false; }
 }
