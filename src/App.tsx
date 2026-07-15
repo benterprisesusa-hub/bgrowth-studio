@@ -21,6 +21,7 @@ import { applyBrandTheme } from './engine/theme';
 import { loadFormData, saveFormData, clearFormData, loadOpenSection, saveOpenSection } from './lib/storage';
 import { downloadElementAsPdf } from './lib/pdf';
 import { api_getTemplate } from './modules/checklist-builder/api';
+import { decompressString } from './lib/compress';
 import type { ChecklistConfig, ChecklistData } from './engine/types';
 
 type ActiveTool = null | 'checklist' | 'planner' | 'calculator' | 'ai-builder';
@@ -42,8 +43,12 @@ function PublicFill({ templateId }: { templateId: string }) {
 
   useEffect(() => {
     api_getTemplate(templateId)
-      .then((t) => {
-        const parsed = JSON.parse(t.configJson) as ChecklistConfig;
+      .then(async (t) => {
+        let configJson = t.configJson;
+        if (configJson.startsWith('GZIP:')) {
+          configJson = await decompressString(configJson.slice(5));
+        }
+        const parsed = JSON.parse(configJson) as ChecklistConfig;
         setConfig(parsed);
         applyBrandTheme(parsed.brand.primaryColor);
         document.title = `${parsed.brand.name} | BGrowth Club`;
@@ -142,8 +147,17 @@ function PublicFillInner({ config, storageId }: { config: ChecklistConfig; stora
           </section>
         </main>
         <Footer footer={config.footer} />
-        <div className="no-print printable-summary-container">   <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} /> </div>
-        <ConfirmDialog open={resetDialogOpen} title="Reset the entire checklist?" description="This clears every field stored in this browser." confirmLabel="Reset Form" onConfirm={() => { clearFormData(storageId); reset(buildDefaultValues(config)); setActiveId(config.sections[0].id); setResetDialogOpen(false); showToast('Form has been reset'); }} onCancel={() => setResetDialogOpen(false)} />
+        <div className="no-print printable-summary-container">
+          <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} />
+        </div>
+        <ConfirmDialog
+          open={resetDialogOpen}
+          title="Reset the entire checklist?"
+          description="This clears every field stored in this browser."
+          confirmLabel="Reset Form"
+          onConfirm={() => { clearFormData(storageId); reset(buildDefaultValues(config)); setActiveId(config.sections[0].id); setResetDialogOpen(false); showToast('Form has been reset'); }}
+          onCancel={() => setResetDialogOpen(false)}
+        />
         <Toast message={toast.message} visible={toast.visible} />
       </div>
     </FormProvider>
