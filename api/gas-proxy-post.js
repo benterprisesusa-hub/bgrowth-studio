@@ -1,3 +1,12 @@
+// Adicione esta configuração ao seu arquivo para liberar o limite de tamanho na Vercel / Next.js
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb', // Altera o limite padrão para 50 Megabytes!
+    },
+  },
+};
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
