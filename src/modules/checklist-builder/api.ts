@@ -23,15 +23,15 @@ async function gasGet<T>(params: Record<string, string>): Promise<T> {
 }
 
 async function gasPost<T>(params: Record<string, string>): Promise<T> {
-  // Ajustado para bater na mesma rota unificada '/api/gas-proxy' usando POST
-  const endpoint = IS_DEV ? DEV_URL : '/api/gas-proxy'; 
-  
+  const endpoint = IS_DEV ? DEV_URL : '/api/gas-proxy-post';
   const res = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   });
-  const json = await res.json();
+  const text = await res.text();
+  alert('GAS RESPONSE: ' + text.substring(0, 300));
+  const json = JSON.parse(text);
   if (json.error) throw new Error(json.error);
   return json as T;
 }
