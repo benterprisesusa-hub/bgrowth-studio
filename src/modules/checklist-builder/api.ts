@@ -3,6 +3,7 @@
  */
 import type { ChecklistTemplate, ChecklistInstance } from './types';
 import type { ChecklistData } from '../../engine/types';
+import { compressString, decompressString } from '../../lib/compress';
 
 const IS_DEV = import.meta.env.DEV;
 const DEV_URL = 'http://localhost:8787';
@@ -52,10 +53,11 @@ export async function api_saveTemplate(payload: {
   configJson: string;
   status?: string;
 }): Promise<ChecklistTemplate> {
+  const compressed = await compressString(payload.configJson);
   return gasPost({
     action: 'checklist_saveTemplate',
     ownerEmail: payload.ownerEmail,
-    payload: JSON.stringify(payload),
+    payload: JSON.stringify({ ...payload, configJson: compressed, compressed: true }),
   });
 }
 
@@ -93,6 +95,16 @@ export async function api_saveInstance(payload: {
 
 export function serializeData(data: ChecklistData): string {
   return JSON.stringify(data);
+}
+
+export async function deserializeConfigJson(configJson: string): Promise<string> {
+  try {
+    const parsed = JSON.parse(configJson);
+    if (parsed?.compressed) {
+      return await decompressString(parsed.configJson ?? configJson);
+    }
+  } catch {}
+  return configJson;
 }
 
 export function deserializeData(dataJson: string): ChecklistData {
