@@ -4,6 +4,7 @@
 import type { ChecklistTemplate, ChecklistInstance } from './types';
 import type { ChecklistData } from '../../engine/types';
 import { compressString, decompressString } from '../../lib/compress';
+import { compressString } from '../../lib/compress';
 
 const IS_DEV = import.meta.env.DEV;
 const DEV_URL = 'http://localhost:8787';
@@ -57,10 +58,9 @@ export async function api_saveTemplate(payload: {
   return gasPost({
     action: 'checklist_saveTemplate',
     ownerEmail: payload.ownerEmail,
-    payload: JSON.stringify({ ...payload, configJson: compressed, compressed: true }),
+    payload: JSON.stringify({ ...payload, configJson: 'GZIP:' + compressed }),
   });
 }
-
 export async function api_archiveTemplate(templateId: string): Promise<{ templateId: string; status: string }> {
   return gasGet({ action: 'checklist_archiveTemplate', templateId });
 }
