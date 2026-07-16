@@ -1,7 +1,6 @@
 import React from 'react';
-import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator, Sparkles } from 'lucide-react';
-import type { StudioTool } from './types';
 import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator, Sparkles, Database } from 'lucide-react';
+import type { StudioTool } from './types';
 
 const TOOLS: StudioTool[] = [
   {
@@ -61,7 +60,7 @@ const ICONS: Record<string, React.ReactNode> = {
   'ai-builder': <Sparkles className="h-7 w-7" />,
   form: <FileText className="h-7 w-7" />,
   invoice: <Receipt className="h-7 w-7" />,
-'product-engine': <Database className="h-7 w-7" />,
+  'product-engine': <Database className="h-7 w-7" />,
 };
 
 interface StudioHomeProps {
