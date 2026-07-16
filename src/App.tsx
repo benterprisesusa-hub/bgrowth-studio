@@ -23,14 +23,16 @@ import { downloadElementAsPdf } from './lib/pdf';
 import { api_getTemplate } from './modules/checklist-builder/api';
 import { decompressString } from './lib/compress';
 import type { ChecklistConfig, ChecklistData } from './engine/types';
+import { ProductEngine } from './modules/product-engine/ProductEngine';
 
-type ActiveTool = null | 'checklist' | 'planner' | 'calculator' | 'ai-builder';
+type ActiveTool = null | 'checklist' | 'planner' | 'calculator' | 'ai-builder' | 'product-engine';
 
 const TOOL_NAMES: Record<string, string> = {
   checklist: 'Checklist Builder',
   planner: 'Planner Engine',
   calculator: 'Calculator Engine',
   'ai-builder': 'AI Product Builder',
+  'product-engine': 'Product Engine',
 };
 
 // -----------------------------------------------------------------------
@@ -225,6 +227,13 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
         {activeTool === 'planner' && <PlannerEngine ownerEmail={ownerEmail} />}
         {activeTool === 'calculator' && <CalculatorEngine ownerEmail={ownerEmail} />}
         {activeTool === 'ai-builder' && <AIBuilder ownerEmail={ownerEmail} />}
+        {activeTool === 'product-engine' && (
+          <ProductEngine
+            ownerEmail={ownerEmail}
+            onHome={() => setActiveTool(null)}
+            onSelectTool={(tool) => setActiveTool(tool as ActiveTool)}
+          />
+        )}
       </div>
     </div>
   );
