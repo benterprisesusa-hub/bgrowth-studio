@@ -1,6 +1,7 @@
 import React from 'react';
 import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator, Sparkles } from 'lucide-react';
 import type { StudioTool } from './types';
+import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator, Sparkles, Database } from 'lucide-react';
 
 const TOOLS: StudioTool[] = [
   {
@@ -36,6 +37,14 @@ const TOOLS: StudioTool[] = [
     status: 'live',
   },
   {
+    id: 'product-engine',
+    name: 'Product Engine',
+    description: 'Transform Builder content into commercial products. Configure pricing, SEO, media and publish.',
+    icon: 'product-engine',
+    color: '#0F172A',
+    status: 'live',
+  },
+  {
     id: 'form',
     name: 'Form Builder',
     description: 'Build smart forms and surveys with conditional logic and response tracking.',
@@ -52,6 +61,7 @@ const ICONS: Record<string, React.ReactNode> = {
   'ai-builder': <Sparkles className="h-7 w-7" />,
   form: <FileText className="h-7 w-7" />,
   invoice: <Receipt className="h-7 w-7" />,
+'product-engine': <Database className="h-7 w-7" />,
 };
 
 interface StudioHomeProps {
