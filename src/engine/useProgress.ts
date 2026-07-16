@@ -17,7 +17,7 @@ function progressForSection(section: SectionConfig, data: ChecklistData): Sectio
   if (section.type === 'form') {
     const values = (data[section.id] as Record<string, string>) ?? {};
     const requiredFields = section.fields.filter((f) => f.required);
-    const countedFields = section.fields; // count all fields for the "X of Y" display
+    const countedFields = section.fields.filter((f) =>       f.type !== 'title' && f.type !== 'static_text' && f.type !== 'image' && f.type !== 'file' && f.type !== 'link'     );
     const filled = countedFields.filter((f) => isNonEmpty(values[f.id])).length;
     const isComplete = requiredFields.every((f) => isNonEmpty(values[f.id]));
     return { id: section.id, filled, total: countedFields.length, isComplete, isOptional };
