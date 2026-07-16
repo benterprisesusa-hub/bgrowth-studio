@@ -1,7 +1,6 @@
 import React from 'react';
-import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator, Sparkles } from 'lucide-react';
-import type { StudioTool } from './types';
 import { ClipboardList, BookOpen, FileText, Receipt, ArrowRight, Calculator, Sparkles, Database } from 'lucide-react';
+import type { StudioTool } from './types';
 
 const TOOLS: StudioTool[] = [
   {
