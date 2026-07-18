@@ -51,16 +51,15 @@ const TOOLS: StudioTool[] = [
     color: '#D97706',
     status: 'coming',
   },
+  {
+    id: 'knowledge-engine',
+    name: 'Knowledge Engine',
+    description: 'Create and manage articles, guides, tutorials, FAQs and all knowledge assets for the BGrowth platform.',
+    icon: 'knowledge-engine',
+    color: '#0EA5A0',
+    status: 'live',
+  },
 ];
-
-{
-  id: 'knowledge-engine',
-  name: 'Knowledge Engine',
-  description: 'Create and manage articles, guides, tutorials, FAQs and all knowledge assets for the BGrowth platform.',
-  icon: 'knowledge-engine',
-  color: '#0EA5A0',
-  status: 'live',
-},
 
 const ICONS: Record<string, React.ReactNode> = {
   checklist: <ClipboardList className="h-7 w-7" />,
