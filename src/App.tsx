@@ -7,6 +7,8 @@ import { ChecklistBuilderApp } from './modules/checklist-builder/ChecklistBuilde
 import { PlannerEngine } from './modules/planner-engine/PlannerEngine';
 import { CalculatorEngine } from './modules/calculator-engine/CalculatorEngine';
 import { AIBuilder } from './modules/ai-builder/AIBuilder';
+import { ProductEngine } from './modules/product-engine/ProductEngine';
+import { KnowledgeEngine } from './modules/knowledge-engine/KnowledgeEngine';
 import { ProductHeader } from './components/ProductHeader';
 import { Sidebar } from './components/Sidebar';
 import { WorkflowAccordion } from './engine/components/WorkflowAccordion';
@@ -23,8 +25,6 @@ import { downloadElementAsPdf } from './lib/pdf';
 import { api_getTemplate } from './modules/checklist-builder/api';
 import { decompressString } from './lib/compress';
 import type { ChecklistConfig, ChecklistData } from './engine/types';
-import { ProductEngine } from './modules/product-engine/ProductEngine';
-import { KnowledgeEngine } from './modules/knowledge-engine/KnowledgeEngine';
 
 type ActiveTool = null | 'checklist' | 'planner' | 'calculator' | 'ai-builder' | 'product-engine' | 'knowledge-engine';
 
@@ -33,7 +33,8 @@ const TOOL_NAMES: Record<string, string> = {
   planner: 'Planner Engine',
   calculator: 'Calculator Engine',
   'ai-builder': 'AI Product Builder',
-  'product-engine': 'Product Engine', 'knowledge-engine': 'Knowledge Engine',
+  'product-engine': 'Product Engine',
+  'knowledge-engine': 'Knowledge Engine',
 };
 
 // -----------------------------------------------------------------------
@@ -90,6 +91,8 @@ function PublicFillInner({ config, storageId }: { config: ChecklistConfig; stora
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
   const [isSaving, setIsSaving] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGeneratingBlankPdf, setIsGeneratingBlankPdf] = useState(false);
+  const [isRenderBlank, setIsRenderBlank] = useState(false);
   const printableRef = useRef<HTMLDivElement>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -120,6 +123,35 @@ function PublicFillInner({ config, storageId }: { config: ChecklistConfig; stora
     else showToast('Checklist complete — nice work!');
   };
 
+  const handlePrintBlank = () => {
+    setIsRenderBlank(true);
+    setTimeout(() => {
+      const handleAfterPrint = () => {
+        setIsRenderBlank(false);
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+      window.addEventListener('afterprint', handleAfterPrint);
+      window.print();
+    }, 250);
+  };
+
+  const handleDownloadBlankPdf = async () => {
+    if (!printableRef.current) return;
+    setIsGeneratingBlankPdf(true);
+    setIsRenderBlank(true);
+    setTimeout(async () => {
+      try {
+        await downloadElementAsPdf(printableRef.current!, `${config.brand.name} - Blank.pdf`);
+        showToast('Blank PDF downloaded');
+      } catch (err) {
+        showToast('Error generating PDF');
+      } finally {
+        setIsRenderBlank(false);
+        setIsGeneratingBlankPdf(false);
+      }
+    }, 250);
+  };
+
   const stepListItems = config.sections.map((section) => {
     const p = progress.sections[section.id];
     const status = section.id === activeId ? ('active' as const) : p.isComplete ? ('completed' as const) : ('pending' as const);
@@ -128,41 +160,37 @@ function PublicFillInner({ config, storageId }: { config: ChecklistConfig; stora
 
   return (
     <FormProvider {...methods}>
-      <div className="min-h-screen bg-[#f4f6fb] overflow-y-auto">
+      <div className="no-print min-h-screen bg-[#f4f6fb]">
         <ProductHeader
           title={config.brand.name}
           onSave={() => { setIsSaving(true); saveFormData(storageId, methods.getValues()); setTimeout(() => { setIsSaving(false); showToast('Saved'); }, 350); }}
           onPrint={() => window.print()}
+          onPrintBlank={handlePrintBlank}
           onDownloadPdf={async () => {
             if (!printableRef.current) return;
             setIsGeneratingPdf(true);
             try { await downloadElementAsPdf(printableRef.current, `${config.brand.name}.pdf`); showToast('PDF downloaded'); }
             finally { setIsGeneratingPdf(false); }
           }}
+          onDownloadBlankPdf={handleDownloadBlankPdf}
           onReset={() => setResetDialogOpen(true)}
           isSaving={isSaving}
           isGeneratingPdf={isGeneratingPdf}
+          isGeneratingBlankPdf={isGeneratingBlankPdf}
         />
-        <main className="no-print mx-auto flex max-w-[1280px] flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-start">
+        <main className="mx-auto flex max-w-[1280px] flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-start">
           <Sidebar percent={progress.percent} completed={progress.completedFields} total={progress.totalFields} items={stepListItems} activeId={activeId} onSelect={setActiveId} />
           <section className="min-w-0 flex-1">
             <WorkflowAccordion config={config} activeId={activeId} onSelect={setActiveId} onContinue={handleContinue} progressBySection={progress.sections} />
           </section>
         </main>
         <Footer footer={config.footer} />
-        <div className="no-print printable-summary-container">
-          <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} />
-        </div>
-        <ConfirmDialog
-          open={resetDialogOpen}
-          title="Reset the entire checklist?"
-          description="This clears every field stored in this browser."
-          confirmLabel="Reset Form"
-          onConfirm={() => { clearFormData(storageId); reset(buildDefaultValues(config)); setActiveId(config.sections[0].id); setResetDialogOpen(false); showToast('Form has been reset'); }}
-          onCancel={() => setResetDialogOpen(false)}
-        />
-        <Toast message={toast.message} visible={toast.visible} />
       </div>
+      <div className="printable-summary-container">
+        <PrintableSummary ref={printableRef} config={config} data={isRenderBlank ? {} : values} percent={isRenderBlank ? 0 : progress.percent} />
+      </div>
+      <ConfirmDialog open={resetDialogOpen} title="Reset the entire checklist?" description="This clears every field stored in this browser." confirmLabel="Reset Form" onConfirm={() => { clearFormData(storageId); reset(buildDefaultValues(config)); setActiveId(config.sections[0].id); setResetDialogOpen(false); showToast('Form has been reset'); }} onCancel={() => setResetDialogOpen(false)} />
+      <Toast message={toast.message} visible={toast.visible} />
     </FormProvider>
   );
 }
@@ -190,15 +218,24 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
   const plannerId = params.get('planner');
 
   const [activeTool, setActiveTool] = useState<ActiveTool>(() => {
+    if (window.location.pathname === '/studio/knowledge') return 'knowledge-engine';
     const tool = params.get('tool');
-    if (tool === 'checklist' || tool === 'planner' || tool === 'calculator' || tool === 'ai-builder') return tool;
+    if (tool === 'checklist' || tool === 'planner' || tool === 'calculator' || tool === 'ai-builder' || tool === 'product-engine' || tool === 'knowledge-engine') return tool as ActiveTool;
     return null;
   });
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    if (activeTool) url.searchParams.set('tool', activeTool);
-    else url.searchParams.delete('tool');
+    if (activeTool === 'knowledge-engine') {
+      url.pathname = '/studio/knowledge';
+      url.searchParams.delete('tool');
+    } else {
+      if (url.pathname === '/studio/knowledge') {
+        url.pathname = '/';
+      }
+      if (activeTool) url.searchParams.set('tool', activeTool);
+      else url.searchParams.delete('tool');
+    }
     window.history.replaceState(null, '', url.toString());
   }, [activeTool]);
 
@@ -216,36 +253,53 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
 
   if (plannerId) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans">
-      <PlannerEngine ownerEmail="" initialPlannerId={plannerId} />
+      <PlannerEngine ownerEmail={params.get('owner') || ownerEmail} initialPlannerId={plannerId} />
     </div>
+  );
+
+  if (activeTool === 'product-engine') return (
+    <ProductEngine
+      ownerEmail={ownerEmail}
+      onHome={() => setActiveTool(null)}
+      onSelectTool={(tool) => setActiveTool(tool as ActiveTool)}
+    />
+  );
+
+  if (activeTool === 'knowledge-engine') return (
+    <KnowledgeEngine
+      ownerEmail={ownerEmail}
+      onHome={() => setActiveTool(null)}
+      onSelectTool={(tool) => setActiveTool(tool as ActiveTool)}
+    />
   );
 
   if (activeTool) return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }} className="font-sans bg-[#f4f6fb]">
-      <StudioNav activeTool={activeTool} toolName={TOOL_NAMES[activeTool]} ownerEmail={ownerEmail} onHome={() => setActiveTool(null)} />
-      <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+      <StudioNav
+        activeTool={activeTool}
+        toolName={TOOL_NAMES[activeTool]}
+        ownerEmail={ownerEmail}
+        onHome={() => setActiveTool(null)}
+      />
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {activeTool === 'checklist' && <ChecklistBuilderApp ownerEmail={ownerEmail} embedded />}
         {activeTool === 'planner' && <PlannerEngine ownerEmail={ownerEmail} />}
         {activeTool === 'calculator' && <CalculatorEngine ownerEmail={ownerEmail} />}
         {activeTool === 'ai-builder' && <AIBuilder ownerEmail={ownerEmail} />}
-        {activeTool === 'product-engine' && (
-          <ProductEngine
-            ownerEmail={ownerEmail}
-            onHome={() => setActiveTool(null)}
-            onSelectTool={(tool) => setActiveTool(tool as ActiveTool)}
-          />
-        )}
-        {activeTool === 'knowledge-engine' && (
-          <KnowledgeEngine ownerEmail={ownerEmail} onHome={() => setActiveTool(null)} />
-        )}
       </div>
     </div>
   );
 
   return (
     <div className="font-sans bg-[#f4f6fb] min-h-screen">
-      <StudioNav ownerEmail={ownerEmail} onHome={() => setActiveTool(null)} />
-      <StudioHome ownerEmail={ownerEmail} onSelect={(tool) => setActiveTool(tool as ActiveTool)} />
+      <StudioNav
+        ownerEmail={ownerEmail}
+        onHome={() => setActiveTool(null)}
+      />
+      <StudioHome
+        ownerEmail={ownerEmail}
+        onSelect={(tool) => setActiveTool(tool as ActiveTool)}
+      />
     </div>
   );
 }
