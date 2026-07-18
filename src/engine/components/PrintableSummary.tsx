@@ -6,7 +6,6 @@ interface PrintableSummaryProps {
   config: ChecklistConfig;
   data: ChecklistData;
   percent: number;
-  blankMode?: boolean;
 }
 
 function isPublicLink() {
@@ -101,7 +100,8 @@ function NotesSection({ section, value, blank }: { section: NotesSectionConfig; 
   );
 }
 
-export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps>(({ config, data, percent, blankMode = false }, ref) => {
+export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps>(({ config, data, percent }, ref) => {
+  const isBlank = Object.keys(data).length === 0;
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const isPublic = isPublicLink();
   const { name: companyName, logo: logoUrl } = getCompanyInfo(config);
@@ -140,13 +140,13 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
         {isPublic && (
           <div className="text-right text-[10px] text-slate-400">
             <p>Generated {today}</p>
-            <p>{blankMode ? 'Blank Form' : `${percent}% complete`}</p>
+            <p>{isBlank ? 'Blank Form' : `${percent}% complete`}</p>
           </div>
         )}
         {!isPublic && (
           <div className="text-right text-[10px] text-slate-400 mt-1">
             <p>Generated {today}</p>
-            <p>{blankMode ? 'Blank Form' : `${percent}% complete`}</p>
+            <p>{isBlank ? 'Blank Form' : `${percent}% complete`}</p>
           </div>
         )}
       </div>
@@ -159,7 +159,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
               key={section.id}
               section={section}
               values={data[section.id] as Record<string, string>}
-              blank={blankMode}
+              blank={isBlank}
             />
           ))}
         </div>
@@ -176,7 +176,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
               key={section.id}
               section={section}
               values={data[section.id] as Record<string, boolean>}
-              blank={blankMode}
+              blank={isBlank}
             />
           ))}
         </div>
@@ -188,7 +188,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
           key={section.id}
           section={section}
           value={data[section.id] as string}
-          blank={blankMode}
+          blank={isBlank}
         />
       ))}
 
@@ -219,7 +219,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
       {/* Footer */}
       <div className="border-t border-slate-200 pt-2 mt-4 flex justify-between items-center text-[9px] font-extrabold">
         <span className="text-slate-800 uppercase tracking-tight">{companyName}</span>
-        <span className="text-slate-400 font-normal">Generated on {today} • {blankMode ? 'Blank Form' : `${percent}% complete`}</span>
+        <span className="text-slate-400 font-normal">Generated on {today} • {isBlank ? 'Blank Form' : `${percent}% complete`}</span>
         <span className="text-[#1061EC] lowercase">bgrowthclub.com</span>
       </div>
     </div>

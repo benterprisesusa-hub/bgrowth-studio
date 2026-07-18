@@ -8,26 +8,37 @@ export async function downloadElementAsPdf(
     orientation?: 'portrait' | 'landscape';
   }
 ): Promise<void> {
-  // Clona o elemento e coloca visível no body para o html2pdf capturar
-  const clone = element.cloneNode(true) as HTMLElement;
-  clone.style.position = 'fixed';
-  clone.style.top = '0';
-  clone.style.left = '0';
-  clone.style.width = '800px';
-  clone.style.zIndex = '-9999';
-  clone.style.backgroundColor = '#ffffff';
-  document.body.appendChild(clone);
+  const container = element.parentElement;
+  const target = container || element;
+
+  const originalWidth = target.style.width;
+  const originalHeight = target.style.height;
+  const originalOverflow = target.style.overflow;
+  const originalPosition = target.style.position;
+  const originalLeft = target.style.left;
+  const originalTop = target.style.top;
+  const originalZIndex = target.style.zIndex;
+  const originalOpacity = target.style.opacity;
+  const originalVisibility = target.style.visibility;
+
+  target.style.position = 'absolute';
+  target.style.top = '0px';
+  target.style.left = '-9999px';
+  target.style.width = '800px';
+  target.style.height = 'auto';
+  target.style.overflow = 'visible';
+  target.style.zIndex = '99999';
+  target.style.opacity = '1';
+  target.style.visibility = 'visible';
+
+  const origElementWidth = element.style.width;
+  element.style.width = '800px';
 
   const options = {
     margin: [10, 10, 10, 10] as [number, number, number, number],
     filename,
     image: { type: 'jpeg' as const, quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-    },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
     jsPDF: {
       unit: 'mm',
       format: (pdfOptions?.format || 'letter').toLowerCase(),
@@ -36,8 +47,17 @@ export async function downloadElementAsPdf(
   };
 
   try {
-    await html2pdf().set(options).from(clone).save();
+    await html2pdf().set(options).from(element).save();
   } finally {
-    document.body.removeChild(clone);
+    target.style.width = originalWidth;
+    target.style.height = originalHeight;
+    target.style.overflow = originalOverflow;
+    target.style.position = originalPosition;
+    target.style.left = originalLeft;
+    target.style.top = originalTop;
+    target.style.zIndex = originalZIndex;
+    target.style.opacity = originalOpacity;
+    target.style.visibility = originalVisibility;
+    element.style.width = origElementWidth;
   }
 }

@@ -52,7 +52,9 @@ export function FillScreen({ template, instance, ownerEmail, onBack }: FillScree
   const [activeId, setActiveId] = useState<string>(config.sections[0].id);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);   const [isBlankMode, setIsBlankMode] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isRenderBlank, setIsRenderBlank] = useState(false);
+  const [isGeneratingBlankPdf, setIsGeneratingBlankPdf] = useState(false);
   const printableRef = useRef<HTMLDivElement>(null);
 
   const showToast = useCallback((message: string) => {
@@ -93,6 +95,36 @@ export function FillScreen({ template, instance, ownerEmail, onBack }: FillScree
   };
 
   const handlePrint = () => window.print();
+
+  const handlePrintBlank = () => {
+    setIsRenderBlank(true);
+    setTimeout(() => {
+      const handleAfterPrint = () => {
+        setIsRenderBlank(false);
+        window.removeEventListener('afterprint', handleAfterPrint);
+      };
+      window.addEventListener('afterprint', handleAfterPrint);
+      window.print();
+    }, 250);
+  };
+
+  const handleDownloadBlankPdf = async () => {
+    if (!printableRef.current) return;
+    setIsGeneratingBlankPdf(true);
+    setIsRenderBlank(true);
+    setTimeout(async () => {
+      try {
+        const filename = `${config.brand.name.replace(/\s+/g, '-')}-Blank.pdf`;
+        await downloadElementAsPdf(printableRef.current!, filename);
+        showToast('Blank PDF downloaded');
+      } catch (err) {
+        showToast('Error generating PDF');
+      } finally {
+        setIsRenderBlank(false);
+        setIsGeneratingBlankPdf(false);
+      }
+    }, 250);
+  };
 
 const handleDownloadPdf = async () => {
     if (!printableRef.current) return;
@@ -167,15 +199,13 @@ const handleDownloadPdf = async () => {
               <Cloud className="h-4 w-4" />
               Save
             </SecondaryButton>
-            <SecondaryButton size="sm" onClick={async () => {
-              setIsBlankMode(true);
-              await new Promise(r => setTimeout(r, 100));
-              const filename = `${config.brand.name.replace(/\s+/g, '-')}-blank.pdf`;
-              if (printableRef.current) await downloadElementAsPdf(printableRef.current, filename);
-              setIsBlankMode(false);
-            }}>
+            <SecondaryButton size="sm" onClick={handlePrintBlank} title="Print blank checklist template">
               <Printer className="h-4 w-4" />
               <span className="hidden sm:inline">Print Blank</span>
+            </SecondaryButton>
+            <SecondaryButton size="sm" onClick={handleDownloadBlankPdf} disabled={isGeneratingBlankPdf} title="Download blank PDF">
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">{isGeneratingBlankPdf ? 'Preparing…' : 'Blank PDF'}</span>
             </SecondaryButton>
             <PrimaryButton size="sm" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
               <Download className="h-4 w-4" />
@@ -209,7 +239,7 @@ const handleDownloadPdf = async () => {
 
       {/* Hidden printable summary */}
      <div className="printable-summary-container">
-        <PrintableSummary ref={printableRef} config={config} data={values} percent={progress.percent} blankMode={isBlankMode} />
+        <PrintableSummary ref={printableRef} config={config} data={isRenderBlank ? {} : values} percent={isRenderBlank ? 0 : progress.percent} />
       </div>
 
       <ConfirmDialog
