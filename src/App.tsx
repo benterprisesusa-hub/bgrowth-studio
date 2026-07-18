@@ -24,15 +24,16 @@ import { api_getTemplate } from './modules/checklist-builder/api';
 import { decompressString } from './lib/compress';
 import type { ChecklistConfig, ChecklistData } from './engine/types';
 import { ProductEngine } from './modules/product-engine/ProductEngine';
+import { KnowledgeEngine } from './modules/knowledge-engine/KnowledgeEngine';
 
-type ActiveTool = null | 'checklist' | 'planner' | 'calculator' | 'ai-builder' | 'product-engine';
+type ActiveTool = null | 'checklist' | 'planner' | 'calculator' | 'ai-builder' | 'product-engine' | 'knowledge-engine';
 
 const TOOL_NAMES: Record<string, string> = {
   checklist: 'Checklist Builder',
   planner: 'Planner Engine',
   calculator: 'Calculator Engine',
   'ai-builder': 'AI Product Builder',
-  'product-engine': 'Product Engine',
+  'product-engine': 'Product Engine', 'knowledge-engine': 'Knowledge Engine',
 };
 
 // -----------------------------------------------------------------------
@@ -233,6 +234,9 @@ export function App({ ownerEmail }: { ownerEmail: string }) {
             onHome={() => setActiveTool(null)}
             onSelectTool={(tool) => setActiveTool(tool as ActiveTool)}
           />
+        )}
+        {activeTool === 'knowledge-engine' && (
+          <KnowledgeEngine ownerEmail={ownerEmail} onHome={() => setActiveTool(null)} />
         )}
       </div>
     </div>

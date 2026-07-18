@@ -53,6 +53,15 @@ const TOOLS: StudioTool[] = [
   },
 ];
 
+{
+  id: 'knowledge-engine',
+  name: 'Knowledge Engine',
+  description: 'Create and manage articles, guides, tutorials, FAQs and all knowledge assets for the BGrowth platform.',
+  icon: 'knowledge-engine',
+  color: '#0EA5A0',
+  status: 'live',
+},
+
 const ICONS: Record<string, React.ReactNode> = {
   checklist: <ClipboardList className="h-7 w-7" />,
   planner: <BookOpen className="h-7 w-7" />,
@@ -61,6 +70,7 @@ const ICONS: Record<string, React.ReactNode> = {
   form: <FileText className="h-7 w-7" />,
   invoice: <Receipt className="h-7 w-7" />,
   'product-engine': <Database className="h-7 w-7" />,
+'knowledge-engine': <BookOpen className="h-7 w-7" />,
 };
 
 interface StudioHomeProps {
