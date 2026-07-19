@@ -9,6 +9,17 @@ interface PrintableSummaryProps {
   percent: number;
 }
 
+function getCompanyInfo(config: ChecklistConfig) {
+  try {
+    const raw = localStorage.getItem('bgrowth.checklist-builder.settings');
+    const settings = raw ? JSON.parse(raw) : null;
+    return {
+      name: settings?.companyName || config.brand.companyLabel || 'BGrowth Club',
+      logo: settings?.logoUrl ?? null,
+    };
+  } catch { return { name: config.brand.companyLabel || 'BGrowth Club', logo: null }; }
+}
+
 // Purpose text overrides for Notary checklists matching the user's high-fidelity layout
 const NOTARY_OVERRIDES: Record<string, { label: string; purpose: string }> = {
   // Section 1: Before the Appointment (beforeAppointment)
@@ -46,6 +57,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
   // template (Print Blank / Blank PDF), it passes an empty object instead of
   // toggling a separate flag prop.
   const isBlank = !data || Object.keys(data).length === 0;
+  const { name: companyName, logo: logoUrl } = getCompanyInfo(config);
 
   // Format date helper
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -80,7 +92,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
         <div className="flex flex-col gap-1 text-[10.5px] leading-snug my-1">
           <span className="font-semibold text-slate-800">{label}:</span>
           {displayValue ? (
-            <span className="whitespace-pre-wrap text-slate-900 font-medium border-l-2 border-slate-200 pl-2">
+            <span className="whitespace-pre-wrap break-words text-slate-900 font-medium border-l-2 border-slate-200 pl-2">
               {displayValue}
             </span>
           ) : (
@@ -106,19 +118,25 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
           </p>
         </div>
 
-        {/* Elegant BGrowth Club branding */}
+        {/* Branding — user's own logo/company if configured, otherwise BGrowth Club default */}
         <div className="flex items-center gap-1.5">
-          <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#1061EC] to-[#0c49b3] text-white font-extrabold text-[14px]">
-            <span>B</span>
-            <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 text-[8px] border border-white font-black text-white leading-none">
-              ↑
+          {logoUrl ? (
+            <img src={logoUrl} alt={companyName} className="h-7 w-7 rounded-lg object-cover shrink-0" />
+          ) : (
+            <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#1061EC] to-[#0c49b3] text-white font-extrabold text-[14px]">
+              <span>B</span>
+              <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 text-[8px] border border-white font-black text-white leading-none">
+                ↑
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex flex-col leading-none">
             <span className="text-[12.5px] font-extrabold tracking-tight text-[#0b1d3a]">
-              BGrowth <span className="text-[#1061EC]">Club</span>
+              {logoUrl ? companyName : (<>BGrowth <span className="text-[#1061EC]">Club</span></>)}
             </span>
-            <span className="text-[6.5px] text-gray-400 uppercase tracking-widest font-semibold">Business Growth</span>
+            {!logoUrl && (
+              <span className="text-[6.5px] text-gray-400 uppercase tracking-widest font-semibold">Business Growth</span>
+            )}
           </div>
         </div>
       </div>
@@ -204,10 +222,10 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
               const secData = (data[formSection.id] as Record<string, string>) || {};
               const SectionIcon = getIcon(formSection.icon);
               return (
-                <div key={formSection.id} className="flex flex-col">
-                  <div className="bg-[#1061EC] text-white px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-t-md flex items-center gap-1.5">
-                    <SectionIcon className="h-3 w-3 shrink-0" />
-                    <span>{formSection.title}</span>
+                <div key={formSection.id} className="flex flex-col min-w-0">
+                  <div className="bg-[#1061EC] text-white px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-t-md flex items-center gap-1.5 leading-none">
+                    <SectionIcon className="h-3 w-3 shrink-0 block" />
+                    <span className="leading-none">{formSection.title}</span>
                   </div>
                   <div className="border border-t-0 border-slate-200 rounded-b-md p-2.5 flex flex-col gap-2 bg-white min-h-[130px]">
                     {formSection.fields.map((field) => {
@@ -442,7 +460,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
 
       {/* 7. Footer */}
       <div className="border-t border-slate-200 pt-1 mt-4 flex justify-between items-center text-[9px] font-extrabold">
-        <span className="text-slate-800 uppercase tracking-tight">BGrowth Club</span>
+        <span className="text-slate-800 uppercase tracking-tight">{companyName}</span>
         <span className="text-slate-400 font-normal">Generated on {today} • {isBlank ? 'Blank Form' : `${percent}% complete`}</span>
         <span className="text-[#1061EC] lowercase">bgrowthclub.com</span>
       </div>
