@@ -6,8 +6,10 @@ export function buildDefaultValues(config: ChecklistConfig): ChecklistData {
   for (const section of config.sections) {
     switch (section.type) {
       case 'form': {
-        const fields: Record<string, string> = {};
-        for (const field of section.fields) fields[field.id] = '';
+        const fields: Record<string, string | boolean> = {};
+        for (const field of section.fields) {
+          fields[field.id] = field.type === 'checkbox' ? false : '';
+        }
         data[section.id] = fields;
         break;
       }
