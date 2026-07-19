@@ -76,8 +76,8 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
   const outcomeValues = (data.outcome as Record<string, boolean>) || {};
 
   // Form line renderer to draw perfect underlined fields (short answers)
-  const FormLine = ({ label, value }: { label: string; value?: string }) => (
-    <div className="flex items-start text-[10.5px] leading-tight">
+ const FormLine = ({ label, value }: { label: string; value?: string }) => (
+    <div className="flex items-start gap-1 text-[10.5px] leading-tight" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
       <span className="font-semibold text-slate-800 shrink-0 mr-1">{label}:</span>
       <span className="grow border-b border-slate-300 font-medium text-slate-900 pl-1 min-h-[15px] break-words whitespace-normal">
         {isBlank ? '' : (value || '')}
@@ -97,7 +97,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
       // Informational / static-text style field: the whole paragraph lives in
       // the label itself, with no separate fillable value to show underneath.
       return (
-        <div className="text-[10.5px] leading-snug whitespace-pre-wrap break-words text-slate-800 font-medium my-1">
+        <div className="text-[10.5px] leading-snug whitespace-pre-wrap break-words text-slate-800 font-medium my-1" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
           {label}
           {displayValue && (
             <div className="mt-1 text-slate-900 border-l-2 border-slate-200 pl-2">{displayValue}</div>
@@ -388,7 +388,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
                   const purposeToUse = isNotary && override ? override.purpose : '';
 
                   return (
-                    <div key={item.id} className="flex items-center py-1 px-2.5">
+                    <div key={item.id} className="flex items-center py-1 px-2.5" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                       <div className={isNotary ? "w-[55%] flex items-center gap-2" : "w-full flex items-center gap-2"}>
                         <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border border-slate-400 bg-white">
                           {checked && <Check className="h-2.5 w-2.5 text-[#1061EC]" strokeWidth={4} />}
