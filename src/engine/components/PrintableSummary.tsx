@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { Check, User, Calendar, Building2 } from 'lucide-react';
+import { getIcon } from '../icons';
 import type { ChecklistConfig, ChecklistData, FormSectionConfig } from '../types';
 
 interface PrintableSummaryProps {
@@ -57,7 +58,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
   const notesValue = (data.notes as string) || '';
   const outcomeValues = (data.outcome as Record<string, boolean>) || {};
 
-  // Form line renderer to draw perfect underlined fields
+  // Form line renderer to draw perfect underlined fields (short answers)
   const FormLine = ({ label, value }: { label: string; value?: string }) => (
     <div className="flex items-baseline text-[10.5px] leading-tight">
       <span className="font-semibold text-slate-800 shrink-0 mr-1">{label}:</span>
@@ -66,6 +67,31 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
       </span>
     </div>
   );
+
+  // Dynamic field renderer for generic checklists: short answers get the
+  // underline style above; long answers (paragraphs) wrap normally instead
+  // of being truncated onto one line.
+  const DynamicFieldLine = ({ label, value }: { label: string; value?: string }) => {
+    const displayValue = isBlank ? '' : (value || '');
+    const isLong = displayValue.length > 48 || displayValue.includes('\n');
+
+    if (isLong) {
+      return (
+        <div className="flex flex-col gap-1 text-[10.5px] leading-snug my-1">
+          <span className="font-semibold text-slate-800">{label}:</span>
+          {displayValue ? (
+            <span className="whitespace-pre-wrap text-slate-900 font-medium border-l-2 border-slate-200 pl-2">
+              {displayValue}
+            </span>
+          ) : (
+            <span className="border-b border-slate-300 min-h-[15px]" />
+          )}
+        </div>
+      );
+    }
+
+    return <FormLine label={label} value={value} />;
+  };
 
   return (
     <div ref={ref} className="printable-summary bg-white p-6 text-slate-900 font-sans max-w-[800px] mx-auto select-none">
@@ -176,9 +202,11 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
             .map((section) => {
               const formSection = section as FormSectionConfig;
               const secData = (data[formSection.id] as Record<string, string>) || {};
+              const SectionIcon = getIcon(formSection.icon);
               return (
                 <div key={formSection.id} className="flex flex-col">
                   <div className="bg-[#1061EC] text-white px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-t-md flex items-center gap-1.5">
+                    <SectionIcon className="h-3 w-3 shrink-0" />
                     <span>{formSection.title}</span>
                   </div>
                   <div className="border border-t-0 border-slate-200 rounded-b-md p-2.5 flex flex-col gap-2 bg-white min-h-[130px]">
@@ -224,7 +252,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
                         );
                       }
                       return (
-                        <FormLine key={field.id} label={field.label} value={secData[field.id]} />
+                        <DynamicFieldLine key={field.id} label={field.label} value={secData[field.id]} />
                       );
                     })}
                   </div>
