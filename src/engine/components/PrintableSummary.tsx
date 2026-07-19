@@ -9,6 +9,10 @@ interface PrintableSummaryProps {
   percent: number;
 }
 
+function isPublicLink() {
+  return window.location.search.includes('template=');
+}
+
 function getCompanyInfo(config: ChecklistConfig) {
   try {
     const raw = localStorage.getItem('bgrowth.checklist-builder.settings');
@@ -57,6 +61,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
   // template (Print Blank / Blank PDF), it passes an empty object instead of
   // toggling a separate flag prop.
   const isBlank = !data || Object.keys(data).length === 0;
+  const isPublic = isPublicLink();
   const { name: companyName, logo: logoUrl } = getCompanyInfo(config);
 
   // Format date helper
@@ -72,9 +77,9 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
 
   // Form line renderer to draw perfect underlined fields (short answers)
   const FormLine = ({ label, value }: { label: string; value?: string }) => (
-    <div className="flex items-baseline text-[10.5px] leading-tight">
+    <div className="flex items-center text-[10.5px] leading-tight">
       <span className="font-semibold text-slate-800 shrink-0 mr-1">{label}:</span>
-      <span className="grow border-b border-slate-300 font-medium text-slate-900 pb-0.5 pl-1 min-h-[15px] truncate">
+      <span className="grow border-b border-slate-300 font-medium text-slate-900 pl-1 min-h-[15px] truncate">
         {isBlank ? '' : (value || '')}
       </span>
     </div>
@@ -118,27 +123,34 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
           </p>
         </div>
 
-        {/* Branding — user's own logo/company if configured, otherwise BGrowth Club default */}
-        <div className="flex items-center gap-1.5">
-          {logoUrl ? (
-            <img src={logoUrl} alt={companyName} className="h-7 w-7 rounded-lg object-cover shrink-0" />
-          ) : (
-            <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#1061EC] to-[#0c49b3] text-white font-extrabold text-[14px]">
-              <span>B</span>
-              <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 text-[8px] border border-white font-black text-white leading-none">
-                ↑
-              </div>
-            </div>
-          )}
-          <div className="flex flex-col leading-none">
-            <span className="text-[12.5px] font-extrabold tracking-tight text-[#0b1d3a]">
-              {logoUrl ? companyName : (<>BGrowth <span className="text-[#1061EC]">Club</span></>)}
-            </span>
-            {!logoUrl && (
-              <span className="text-[6.5px] text-gray-400 uppercase tracking-widest font-semibold">Business Growth</span>
-            )}
+        {/* Branding — public link shows only the buyer's typed company name (no logo);
+            logged-in Studio shows the configured logo, or the BGrowth Club default */}
+        {isPublic ? (
+          <div className="text-right text-[10px] text-slate-500 font-semibold">
+            {companyName}
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            {logoUrl ? (
+              <img src={logoUrl} alt={companyName} className="h-7 w-7 rounded-lg object-cover shrink-0" />
+            ) : (
+              <div className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#1061EC] to-[#0c49b3] text-white font-extrabold text-[14px]">
+                <span>B</span>
+                <div className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500 text-[8px] border border-white font-black text-white leading-none">
+                  ↑
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col leading-none">
+              <span className="text-[12.5px] font-extrabold tracking-tight text-[#0b1d3a]">
+                {logoUrl ? companyName : (<>BGrowth <span className="text-[#1061EC]">Club</span></>)}
+              </span>
+              {!logoUrl && (
+                <span className="text-[6.5px] text-gray-400 uppercase tracking-widest font-semibold">Business Growth</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {isNotary ? (
@@ -173,13 +185,13 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
               <FormLine label="City" value={appointmentData.city} />
 
               {/* Special State & Zip inline layout */}
-              <div className="flex items-baseline text-[10.5px] leading-tight">
+              <div className="flex items-center text-[10.5px] leading-tight">
                 <span className="font-semibold text-slate-800 shrink-0 mr-1">State:</span>
-                <span className="w-12 border-b border-slate-300 font-medium text-slate-900 pb-0.5 pl-1 min-h-[15px] truncate mr-2">
+                <span className="w-12 border-b border-slate-300 font-medium text-slate-900 pl-1 min-h-[15px] truncate mr-2">
                   {isBlank ? '' : (appointmentData.state || '')}
                 </span>
                 <span className="font-semibold text-slate-800 shrink-0 mr-1">Zip:</span>
-                <span className="grow border-b border-slate-300 font-medium text-slate-900 pb-0.5 pl-1 min-h-[15px] truncate">
+                <span className="grow border-b border-slate-300 font-medium text-slate-900 pl-1 min-h-[15px] truncate">
                   {isBlank ? '' : (appointmentData.zip || '')}
                 </span>
               </div>
