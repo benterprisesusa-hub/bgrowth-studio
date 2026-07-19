@@ -77,9 +77,9 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
 
   // Form line renderer to draw perfect underlined fields (short answers)
   const FormLine = ({ label, value }: { label: string; value?: string }) => (
-    <div className="flex items-center text-[10.5px] leading-tight">
+    <div className="flex items-start text-[10.5px] leading-tight">
       <span className="font-semibold text-slate-800 shrink-0 mr-1">{label}:</span>
-      <span className="grow border-b border-slate-300 font-medium text-slate-900 pl-1 min-h-[15px] truncate">
+      <span className="grow border-b border-slate-300 font-medium text-slate-900 pl-1 min-h-[15px] break-words whitespace-normal">
         {isBlank ? '' : (value || '')}
       </span>
     </div>
