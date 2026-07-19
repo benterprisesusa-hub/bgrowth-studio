@@ -6,6 +6,12 @@ const phoneRegex = /^[\d\s()+.-]{7,20}$/;
 function zodForField(field: FieldConfig): z.ZodTypeAny {
   let base: z.ZodTypeAny;
 
+  // Checkboxes store a boolean, not a string — validate them separately
+  // so they don't fall through to the string/literal('') branch below.
+  if (field.type === 'checkbox') {
+    return z.boolean().optional().default(false);
+  }
+
   switch (field.type) {
     case 'email':
       base = z.string().email(`Enter a valid ${field.label.toLowerCase()}`);
@@ -16,16 +22,13 @@ function zodForField(field: FieldConfig): z.ZodTypeAny {
     default:
       base = z.string();
   }
-
   if (!field.required) {
     // Still validate format when a value IS present, but allow empty.
     return z.union([z.literal(''), base]);
   }
-
   if (field.type === 'email' || field.type === 'phone') {
     return base; // already enforces non-empty via regex/email
   }
-
   return (base as z.ZodString).min(1, `${field.label} is required`);
 }
 
