@@ -259,6 +259,17 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
                   </div>
                   <div className="border border-t-0 border-slate-200 rounded-b-md p-2.5 flex flex-col gap-2 bg-white min-h-[130px]">
                     {formSection.fields.map((field) => {
+                      if (field.type === 'checkbox') {
+                        const checked = !isBlank && !!secData[field.id];
+                        return (
+                          <div key={field.id} className="flex items-center gap-2 text-[10.5px] leading-tight my-0.5">
+                            <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border border-slate-400 bg-white">
+                              {checked && <Check className="h-2.5 w-2.5 text-[#1061EC]" strokeWidth={4} />}
+                            </div>
+                            <span className="font-medium text-slate-800">{field.label}</span>
+                          </div>
+                        );
+                      }
                       if (field.type === 'image') {
                         const imgValue = isBlank ? undefined : secData[field.id];
                         return (
