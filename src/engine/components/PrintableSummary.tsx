@@ -90,7 +90,21 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
   // of being truncated onto one line.
   const DynamicFieldLine = ({ label, value }: { label: string; value?: string }) => {
     const displayValue = isBlank ? '' : (value || '');
+    const isLongLabel = label.length > 48;
     const isLong = displayValue.length > 48 || displayValue.includes('\n');
+
+    if (isLongLabel) {
+      // Informational / static-text style field: the whole paragraph lives in
+      // the label itself, with no separate fillable value to show underneath.
+      return (
+        <div className="text-[10.5px] leading-snug whitespace-pre-wrap break-words text-slate-800 font-medium my-1">
+          {label}
+          {displayValue && (
+            <div className="mt-1 text-slate-900 border-l-2 border-slate-200 pl-2">{displayValue}</div>
+          )}
+        </div>
+      );
+    }
 
     if (isLong) {
       return (
@@ -235,9 +249,13 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
               const SectionIcon = getIcon(formSection.icon);
               return (
                 <div key={formSection.id} className="flex flex-col min-w-0">
-                  <div className="bg-[#1061EC] text-white px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-t-md flex items-center gap-1.5 leading-none">
-                    <SectionIcon className="h-3 w-3 shrink-0 block" />
-                    <span className="leading-none">{formSection.title}</span>
+                  <div className="bg-[#1061EC] text-white px-2.5 py-1.5 text-[10px] font-extrabold uppercase tracking-wide rounded-t-md" style={{ display: 'table', width: '100%' }}>
+                    <div style={{ display: 'table-cell', verticalAlign: 'middle', width: '14px' }}>
+                      <SectionIcon className="h-3 w-3" style={{ display: 'block' }} />
+                    </div>
+                    <div style={{ display: 'table-cell', verticalAlign: 'middle' }} className="pl-1.5">
+                      {formSection.title}
+                    </div>
                   </div>
                   <div className="border border-t-0 border-slate-200 rounded-b-md p-2.5 flex flex-col gap-2 bg-white min-h-[130px]">
                     {formSection.fields.map((field) => {
