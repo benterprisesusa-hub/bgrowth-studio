@@ -266,7 +266,7 @@ export const PrintableSummary = forwardRef<HTMLDivElement, PrintableSummaryProps
                             <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-sm border border-slate-400 bg-white">
                               {checked && <Check className="h-2.5 w-2.5 text-[#1061EC]" strokeWidth={4} />}
                             </div>
-                            <span className="font-medium text-slate-800">{field.label}</span>
+                            <span className="font-medium text-slate-800">{field.placeholder || field.label}</span>
                           </div>
                         );
                       }

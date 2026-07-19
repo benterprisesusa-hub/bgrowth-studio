@@ -35,15 +35,16 @@ export async function downloadElementAsPdf(
   element.style.width = '800px';
 
   const options = {
-    margin: [10, 10, 10, 10] as [number, number, number, number],
+    margin: [10, 12, 10, 12] as [number, number, number, number],
     filename,
     image: { type: 'jpeg' as const, quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 824 },
     jsPDF: {
       unit: 'mm',
       format: (pdfOptions?.format || 'letter').toLowerCase(),
       orientation: pdfOptions?.orientation || ('portrait' as const),
     },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
   };
 
   try {
