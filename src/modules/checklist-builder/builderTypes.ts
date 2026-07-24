@@ -38,6 +38,8 @@ export interface BuilderDraft {
   name: string;
   primaryColor: string;
   category?: string;
+  /** Storefront-facing description used when publishing to the Portal. */
+  shortDescription?: string;
   sections: DraftSection[];
 }
 

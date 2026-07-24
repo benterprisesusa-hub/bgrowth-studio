@@ -5,12 +5,13 @@ import {
 } from '@dnd-kit/core';
 import { SortableContext, arrayMove, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
-import { Plus, Save, Eye, EyeOff, Palette } from 'lucide-react';
+import { Plus, Save, Eye, EyeOff, Palette, UploadCloud } from 'lucide-react';
 import { ModuleHeader } from './ModuleHeader';
 import { SectionEditor } from './SectionEditor';
 import { LivePreview } from './LivePreview';
 import { TemplateImportModal } from './TemplateImportModal';
 import { Input } from '../../components/ui/Input';
+import { Textarea } from '../../components/ui/Textarea';
 import { PrimaryButton, SecondaryButton } from '../../components/ui/Button';
 import { Toast } from '../../components/Toast';
 import { api_saveTemplate } from './api';
@@ -19,6 +20,7 @@ import type { BuilderDraft, DraftSection } from './builderTypes';
 import { BRAND_COLOR_PRESETS } from './builderTypes';
 import type { SectionType } from '../../engine/types';
 import { cn } from '../../lib/utils';
+import { publishToPortal, slugifyProductName } from '../../lib/publishingEngine';
 
 function newKey() {
   return `k-${Math.random().toString(36).slice(2, 9)}`;
@@ -55,6 +57,7 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
   );
   const [showPreview, setShowPreview] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -157,6 +160,42 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
     }
   };
 
+  /**
+   * Publishes the currently-saved template to the BGrowth Portal via the
+   * Publishing Engine (see src/lib/publishingEngine.ts). Requires the
+   * template to have been saved at least once — draft.templateId becomes
+   * the stable studio_product_id republishes key on, so publishing an
+   * unsaved draft (which would get a throwaway `draft-<timestamp>` id) is
+   * blocked rather than silently creating an orphaned Portal product.
+   */
+  const handlePublish = async () => {
+    if (!draft.templateId) { showToast('Save the template before publishing'); return; }
+    if (!draft.shortDescription?.trim()) { showToast('Add a short description before publishing'); return; }
+
+    setIsPublishing(true);
+    try {
+      const result = await publishToPortal({
+        studioProductId: draft.templateId,
+        config: draftToConfig(draft),
+        slug: slugifyProductName(draft.name),
+        shortDescription: draft.shortDescription,
+        categorySlug: draft.category,
+        status: 'published',
+        publishedBy: ownerEmail,
+      });
+
+      if (!result.ok) {
+        showToast('Publish failed — ' + (result.error ?? 'unknown error'));
+        return;
+      }
+      showToast(`Published to Portal ✓ (v${result.product?.version})`);
+    } catch (e) {
+      showToast('Publish failed — ' + (e instanceof Error ? e.message : 'unknown error'));
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const liveConfig = draftToConfig(draft);
   const sectionCount = draft.sections.length;
 
@@ -177,6 +216,15 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving…' : 'Save Template'}
             </PrimaryButton>
+            <SecondaryButton
+              size="sm"
+              onClick={handlePublish}
+              disabled={isPublishing || !draft.templateId}
+              title={!draft.templateId ? 'Save the template first' : 'Publish to the BGrowth Portal'}
+            >
+              <UploadCloud className="h-4 w-4" />
+              {isPublishing ? 'Publishing…' : 'Publish to Portal'}
+            </SecondaryButton>
           </div>
         }
       />
@@ -199,6 +247,17 @@ export function TemplateBuilderScreen({ ownerEmail, onBack, initialDraft }: Temp
                     value={draft.name}
                     placeholder="e.g. Client Onboarding Checklist"
                     onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-navy-400">
+                    Short Description <span className="normal-case font-normal text-navy-300">(shown on the Portal storefront)</span>
+                  </label>
+                  <Textarea
+                    value={draft.shortDescription ?? ''}
+                    placeholder="One or two sentences describing this Workspace to a customer."
+                    rows={2}
+                    onChange={(e) => setDraft((d) => ({ ...d, shortDescription: e.target.value }))}
                   />
                 </div>
                   <div>
